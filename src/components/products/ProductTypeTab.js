@@ -1,64 +1,66 @@
 import React, { useState } from "react";
-import Button from "@mui/material/Button";
+import { Button, Input, Table, Modal, Spin, Alert } from "antd";
 import { useNavigate } from "react-router-dom";
-import { withStyles } from "@mui/styles";
-import Searchbox from "../controls/Searchbox";
 import api from "../../api";
-import ApiAutoFetchDatagrid from "../controls/datagrid/ApiAutoFetchDatagrid";
-import Message from "../controls/Message";
-import CircularLoader from "../controls/loader/CircularLoader";
-import YesNo from "../controls/dialog/YesNo";
 
-const styles = theme => ({
-  leftIcon: {
-    marginRight: theme.spacing.unit
-  },
-  button: {
-    margin: theme.spacing.unit
-  },
-  iconSmall: {
-    fontSize: 20
-  },
-  wrapper: {
-    marginTop: 20,
-    position: "relative"
-  }
-});
-
-const ProductTypeTab = ({ classes }) => {
-  const productColumns = ["Product Type ID", "Description"];
+const ProductTypeTab = () => {
+  const productColumns = [
+    {
+      title: "Product Type ID",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (text, record) => (
+        <>
+          <Button type="link" onClick={() => onEdit(record)}>Edit</Button>
+          <Button type="link" danger onClick={() => onDelete(record)}>Delete</Button>
+        </>
+      ),
+    },
+  ];
 
   const [clearSearch, setClearSearch] = useState(false);
-  const [serachQuery, setSerachQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [message, setMessage] = useState("");
   const [showMessage, setShowMessage] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [dataSource, setDataSource] = useState([]);
 
   const navigate = useNavigate();
 
   const onListClick = () => {
     setClearSearch(true);
-    setSerachQuery("");
+    setSearchQuery("");
     setShowMessage(false);
   };
 
-  const onSearchSubmit = async id => {
+  const onSearchSubmit = async (value) => {
     setClearSearch(false);
-    setSerachQuery(id);
+    setSearchQuery(value);
+    const data = await getApiPromise();
+    setDataSource(data);
   };
 
   const onCreateNewClick = () => {
-    navigate("producttypes/new");
+    navigate("/producttypes/new");
   };
 
-  const onEdit = row => {
-    navigate(`producttypes/edit/${row.id}`);
+  const onEdit = (row) => {
+    navigate(`/producttypes/edit/${row.id}`);
   };
 
-  const onDelete = itemToDelete => {
+  const onDelete = (itemToDelete) => {
     setShowConfirmDeleteDialog(true);
     setItemToDelete(itemToDelete);
   };
@@ -81,7 +83,7 @@ const ProductTypeTab = ({ classes }) => {
 
       if (message === "FOREIGN_KEY_CONSTRAINT") {
         message =
-          "There are products associated with the selected product type chosen for deletion. So it can't be deleted. Please modify the product references this product type and then delete.";
+          "There are products associated with the selected product type chosen for deletion. So it can't be deleted. Please modify the product references to this product type and then delete.";
       }
       displayMessage(message, true);
     }
@@ -95,78 +97,43 @@ const ProductTypeTab = ({ classes }) => {
     setShowConfirmDeleteDialog(false);
   };
 
-  const onMessageCloseClick = () => {
-    setShowMessage(false);
-  };
-
-  const onCancelConfirmDeleteClick = () => {
-    setShowConfirmDeleteDialog(false);
-  };
-
   const getApiPromise = () => {
-    if (serachQuery.length === 0) {
+    if (searchQuery.length === 0) {
       return api.productType.fetchByPages();
     }
 
-    return api.productType.searchByIdAndGetByPages(serachQuery);
+    return api.productType.searchByIdAndGetByPages(searchQuery);
   };
 
   return (
-    <div className={classes.wrapper}>
-      <CircularLoader isLoading={isLoading} />
-      <YesNo
-        open={showConfirmDeleteDialog}
-        message="Are you sure wan't to delete the selected item"
-        onOk={onConfirmDeleteClick}
-        onCancel={onCancelConfirmDeleteClick}
-      />
-      <div>
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="default"
-          size="small"
-          onClick={onListClick}
-        >
-          List
-        </Button>
-
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="primary"
-          size="small"
-          onClick={onCreateNewClick}
-        >
+    <div style={{ marginTop: 20, position: "relative" }}>
+      {isLoading && <Spin />}
+      {showMessage && <Alert message="Message" description={message} type={isError ? "error" : "success"} closable />}
+      
+      <div style={{ marginBottom: 16 }}>
+        <Button onClick={onListClick}>List</Button>
+        <Button type="primary" onClick={onCreateNewClick} style={{ marginLeft: 8 }}>
           Create New
         </Button>
-        <Searchbox
-          clear={clearSearch}
-          onSubmit={onSearchSubmit}
+        <Input.Search
+          placeholder="Search by ID"
+          onSearch={onSearchSubmit}
+          style={{ width: 200, marginLeft: 16 }}
         />
       </div>
 
-      <Message
-        style={{ width: "98%" }}
-        title="Message"
-        message={message}
-        show={showMessage}
-        isError={isError}
-        onCloseClick={onMessageCloseClick}
-        autoClose={!isError}
-      />
+      <Table columns={productColumns} dataSource={dataSource} rowKey="id" />
 
-      <div className={classes.wrapper}>
-        <ApiAutoFetchDatagrid
-          datasourcePromise={getApiPromise}
-          actions={["del", "edit"]}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          headers={productColumns}
-        />
-      </div>
+      <Modal
+        title="Confirm Deletion"
+        visible={showConfirmDeleteDialog}
+        onOk={onConfirmDeleteClick}
+        onCancel={() => setShowConfirmDeleteDialog(false)}
+      >
+        Are you sure you want to delete the selected item?
+      </Modal>
     </div>
   );
 };
 
-export default withStyles(styles, { withTheme: true })(ProductTypeTab);
+export default ProductTypeTab;

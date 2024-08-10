@@ -1,29 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as equal from "fast-deep-equal";
+import { Form, Input, Button, Select, Spin, Alert, Modal } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
-import { withStyles } from "@mui/styles";
-import Container from "../controls/Container";
-import Form from "../controls/Form";
-import CustomTextField from "../controls/textfields/CustomTextField";
-import Dropdown from "../controls/dropdown/Dropdown";
-import CircularLoader from "../controls/loader/CircularLoader";
 import api from "../../api";
-import NumberTextField from "../controls/textfields/NumberTextField";
-import { isValueExists } from "../../utils";
-import Message from "../controls/Message";
-import Prompt from "../controls/dialog/Prompt";
 
-// eslint-disable-next-line
-const styles = theme => ({
-  form: {
-    marginLeft: 20
-  },
-  wrapper: {
-    position: "relative"
-  }
-});
-
-const AddNewProduct = ({ classes }) => {
+const AddNewProduct = () => {
   const initialData = {
     id: "",
     name: "",
@@ -33,25 +13,21 @@ const AddNewProduct = ({ classes }) => {
     productTypeId: ""
   };
 
+  const [form] = Form.useForm();
   const [data, setData] = useState(initialData);
-  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [productTypeIds, setProductTypeIds] = useState([]);
   const [showMessage, setShowMessage] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [showMessageDialog, setShowMessageDialog] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
 
   const navigate = useNavigate();
   const { id } = useParams();
   const idRef = useRef(null);
 
   useEffect(() => {
-    window.onbeforeunload = () => {
-      sessionStorage.setItem("form", JSON.stringify(data));
-    };
-
     const fetchData = async () => {
       setIsLoading(true);
 
@@ -72,192 +48,136 @@ const AddNewProduct = ({ classes }) => {
           setIsEdit(true);
         }
       } catch (error) {
-        showError(error);
+        displayMessage(error.message, true);
       }
     };
 
     fetchData();
   }, [id]);
 
-  const onChange = e => {
-    setData({ ...data, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
-  };
-
-  const onProductTypeDropdownChange = value => {
-    const productTypeId = value === null ? "" : value;
-    setData({ ...data, productTypeId });
-    setErrors({ ...errors, productTypeId: "" });
-  };
-
-  const onCancelClick = () => {
-    const isDirty = !equal(initialData, data);
-
-    if (isDirty && !isEdit) {
-      clearForm();
-      return;
-    }
-
-    navigate(-1);
-  };
-
-  const onSubmit = async e => {
-    e.preventDefault();
-
-    const validationErrors = isValueExists(data);
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
+  const onSubmit = async (values) => {
     try {
-      data.costPrice = Number(data.costPrice);
-      data.sellingPrice = Number(data.sellingPrice);
-
       if (!isEdit) {
-        await createNew(data);
+        await createNew(values);
       } else {
-        await update(data);
+        await update(values);
       }
     } catch (error) {
-      showError(error);
+      displayMessage(error.message, true);
     }
   };
 
-  const createNew = async data => {
-    const res = await api.product.createNew(data);
+  const createNew = async (values) => {
+    const res = await api.product.createNew(values);
 
     if (res.status === 200) {
-      showMessageHandler("Saved successfully");
+      displayMessage("Saved successfully");
       clearForm();
     } else {
       throw new Error(`Unable to create the record. The status code is ${res.status}`);
     }
   };
 
-  const update = async data => {
-    const res = await api.product.update(id, data);
+  const update = async (values) => {
+    const res = await api.product.update(id, values);
 
     if (res.status === 200) {
+      displayMessage("Updated successfully");
       clearForm(true);
     } else {
       throw new Error(`Unable to update. The status code is ${res.status}`);
     }
   };
 
-  const clearForm = (canShowMessageDialog = false) => {
-    setData(initialData);
-    setShowMessageDialog(canShowMessageDialog);
-
-    if (idRef.current) {
-      idRef.current.focus();
-    }
+  const clearForm = (showDialog = false) => {
+    form.resetFields();
+    setShowMessageDialog(showDialog);
   };
 
-  const onMessageCloseClick = () => {
-    setShowMessage(false);
-    setMessage("");
-    setIsError(false);
-  };
-
-  const showMessageHandler = (message, isError = false) => {
+  const displayMessage = (message, isError = false) => {
     setShowMessage(true);
     setMessage(message);
     setIsError(isError);
     setIsLoading(false);
   };
 
-  const showError = error => {
-    setShowMessage(true);
-    setMessage(error.message);
-    setIsError(true);
-    setIsLoading(false);
-  };
-
-  const onMessageDialogCloseClick = () => {
-    setShowMessageDialog(false);
-    navigate(-1);
-  };
-
   return (
-    <Container title={isEdit ? "Edit Product" : "New Product"}>
-      <Prompt
-        message="The product you entered was saved successfully."
-        open={showMessageDialog}
-        handleClose={onMessageDialogCloseClick}
-      />
-      <CircularLoader isLoading={isLoading} />
-      <Message
-        title="Message"
-        message={message}
-        show={showMessage}
-        isError={isError}
-        onCloseClick={onMessageCloseClick}
-        autoClose={!isError}
-      />
-
+    <Spin spinning={isLoading}>
+      {showMessage && (
+        <Alert
+          message="Message"
+          description={message}
+          type={isError ? "error" : "success"}
+          closable
+          onClose={() => setShowMessage(false)}
+        />
+      )}
       <Form
-        id="product"
-        onSubmit={onSubmit}
-        onCancel={onCancelClick}
-        className={classes.form}
+        form={form}
+        layout="vertical"
+        onFinish={onSubmit}
+        initialValues={data}
       >
-        <CustomTextField
-          inputRef={idRef}
-          error={!!errors.id}
-          name="id"
-          value={data.id}
+        <Form.Item
           label="Product Id"
-          helperText="This should be unique"
-          onChange={onChange}
-          disabled={isEdit}
-        />
-
-        <CustomTextField
-          error={!!errors.name}
-          name="name"
-          value={data.name}
+          name="id"
+          rules={[{ required: true, message: "Please input the product ID!" }]}
+        >
+          <Input disabled={isEdit} />
+        </Form.Item>
+        <Form.Item
           label="Name"
-          onChange={onChange}
-        />
-
-        <Dropdown
-          name="productType"
-          value={data.productTypeId}
-          error={!!errors.productType}
-          datasource={productTypeIds}
-          onChange={onProductTypeDropdownChange}
-          placeholder=""
-          label="Product type"
-        />
-
-        <CustomTextField
-          error={!!errors.description}
-          name="description"
-          value={data.description}
+          name="name"
+          rules={[{ required: true, message: "Please input the product name!" }]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          label="Product Type"
+          name="productTypeId"
+          rules={[{ required: true, message: "Please select a product type!" }]}
+        >
+          <Select options={productTypeIds} />
+        </Form.Item>
+        <Form.Item
           label="Description"
-          onChange={onChange}
-        />
-
-        <NumberTextField
-          error={!!errors.costPrice}
+          name="description"
+        >
+          <Input.TextArea />
+        </Form.Item>
+        <Form.Item
+          label="Cost Price"
           name="costPrice"
-          value={data.costPrice}
-          label="Cost price"
-          onChange={onChange}
-        />
-
-        <NumberTextField
-          error={!!errors.sellingPrice}
+          rules={[{ required: true, message: "Please input the cost price!" }]}
+        >
+          <Input type="number" />
+        </Form.Item>
+        <Form.Item
+          label="Selling Price"
           name="sellingPrice"
-          value={data.sellingPrice}
-          label="Selling price"
-          onChange={onChange}
-        />
+          rules={[{ required: true, message: "Please input the selling price!" }]}
+        >
+          <Input type="number" />
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            {isEdit ? "Update" : "Create"}
+          </Button>
+          <Button onClick={() => navigate(-1)} style={{ marginLeft: 8 }}>
+            Cancel
+          </Button>
+        </Form.Item>
       </Form>
-    </Container>
+      <Modal
+        title="Saved Successfully"
+        visible={showMessageDialog}
+        onOk={() => navigate(-1)}
+        onCancel={() => setShowMessageDialog(false)}
+      >
+        The product you entered was saved successfully.
+      </Modal>
+    </Spin>
   );
 };
 
-export default withStyles(styles, { withTheme: true })(AddNewProduct);
+export default AddNewProduct;
