@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Table, TableBody } from "material-ui";
+import { Table, TableBody } from "@mui/material";
 import TotalRow from "./TotalRow";
 import TaxDiscountRow from "./TaxDiscountRow";
 import TotalBillRow from "./TotalBillRow";

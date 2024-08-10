@@ -1,57 +1,40 @@
-import React, { Component } from "react";
-import { withRouter } from "react-router";
-import { withStyles } from "material-ui/styles";
+import React, { useState } from "react";
+import { Layout } from "antd";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "./header/Header";
 import Sidebar from "./sidebar/Sidebar";
-import MainContainer from "../controls/MainContainer";
 import Routes from "./Routes";
 
-// eslint-disable-next-line
-const styles = theme => ({
-  root: {
-    zIndex: 1,
-    // overflow: "auto",
-    display: "flex",
-    // width: "100%",
-    height: "calc(100vh - 1px)", // TODO needs to figure why. For now its a hack :)
-    borderBottom: "1px solid #e0e0e0"
-  }
-});
+const { Content } = Layout;
 
-class Home extends Component {
-  state = {
-    mobileOpen: false
+const Home = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
-  handleDrawerToggle = () => {
-    this.setState({ mobileOpen: !this.state.mobileOpen });
-  };
+  const shouldRenderMobileMenu = location.pathname === "/sale";
 
-  render() {
-    const { classes } = this.props;
-    const { mobileOpen } = this.state;
-
-    const shouldRenderMobileMenu =
-      this.props.history.location.pathname === "/sale";
-
-    return (
-      <div className={classes.root}>
-        <Header
-          shouldRenderMobileMenu={shouldRenderMobileMenu}
-          handleDrawerToggle={this.handleDrawerToggle}
-        />
+  return (
+    <Layout style={{ height: "100vh" }}>
+      <Header
+        shouldRenderMobileMenu={shouldRenderMobileMenu}
+        handleDrawerToggle={handleDrawerToggle}
+      />
+      <Layout>
         <Sidebar
           mobileOpen={mobileOpen}
-          handleDrawerToggle={this.handleDrawerToggle}
+          handleDrawerToggle={handleDrawerToggle}
         />
-        <MainContainer shouldRenderMobileMenu={shouldRenderMobileMenu}>
+        <Content style={{ margin: "24px 16px", padding: 24, background: "#fff" }}>
           <Routes />
-        </MainContainer>
-      </div>
-    );
-  }
-}
+        </Content>
+      </Layout>
+    </Layout>
+  );
+};
 
-const component = withStyles(styles, { withTheme: true })(Home);
-
-export default withRouter(component);
+export default Home;

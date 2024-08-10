@@ -1,5 +1,5 @@
 import React from "react";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@mui/styles";
 import SubmitCancel from "./SubmitCancel";
 
 // eslint-disable-next-line

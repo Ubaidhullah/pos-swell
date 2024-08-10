@@ -1,5 +1,5 @@
 import React, { Fragment } from "react";
-import { withStyles } from "material-ui/styles";
+import { withStyles } from "@mui/styles";
 
 const styles = () => ({
   price: {

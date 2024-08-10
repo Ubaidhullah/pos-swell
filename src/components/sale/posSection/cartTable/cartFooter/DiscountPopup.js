@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import currency from "currency.js";
 import { connect } from "react-redux";
-import { Switch, withStyles } from "material-ui";
+import { Switch } from "@mui/material";
+import { withStyles } from "@mui/styles";
 import FormDialog from "../../../../controls/dialog/FormDialog";
 import NumberTextField from "../../../../controls/textfields/NumberTextField";
 import {

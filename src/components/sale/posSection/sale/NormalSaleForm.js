@@ -1,7 +1,7 @@
 import React from "react";
 import currency from "currency.js";
-import { Paper } from "material-ui";
-import { withStyles } from "material-ui/styles";
+import { Paper } from "@mui/material";
+import { withStyles } from "@mui/styles";
 import Form from "../../../controls/Form";
 import CustomLabel from "./CustomLabel";
 import NumberTextField from "../../../controls/textfields/NumberTextField";

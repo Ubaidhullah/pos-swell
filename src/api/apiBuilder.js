@@ -1,7 +1,6 @@
 import axios from "axios";
 
-export const URL_PREFIX = process.env.REACT_APP_IS_PROD ?
-  process.env.REACT_APP_PROD_URL_PREFIX :
+export const URL_PREFIX = 
   "http://localhost:3500/api";
 
 const apiBuilder = mainRouteName => ({

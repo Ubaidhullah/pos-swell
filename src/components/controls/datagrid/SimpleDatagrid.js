@@ -1,18 +1,18 @@
 import React, { Component } from "react";
-import { withStyles } from "material-ui/styles";
-import { LinearProgress } from "material-ui/Progress";
-import IconButton from "material-ui/IconButton";
-import DeleteIcon from "material-ui-icons/Delete";
-import EditIcon from "material-ui-icons/Edit";
-import Button from "material-ui/Button";
+import { withStyles } from "@mui/styles";
+import { LinearProgress } from "@mui/material/Progress";
+import IconButton from "@mui/material/IconButton";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import Button from "@mui/material/Button";
 import Table, {
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   TableFooter
-} from "material-ui/Table";
-import Paper from "material-ui/Paper";
+} from "@mui/material/Table";
+import Paper from "@mui/material/Paper";
 import CustomTablePagination from "./CustomTablePagination";
 import CustomTableCell from "./CustomTableCell";
 import Overlay from "../Overlay";

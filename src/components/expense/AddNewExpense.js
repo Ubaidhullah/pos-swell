@@ -1,7 +1,7 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as equal from "fast-deep-equal";
-import { withRouter } from "react-router";
-import { withStyles } from "material-ui/styles";
+import { useNavigate, useParams } from "react-router-dom";
+import { withStyles } from "@mui/styles";
 import Container from "../controls/Container";
 import Form from "../controls/Form";
 import CustomTextField from "../controls/textfields/CustomTextField";
@@ -12,7 +12,7 @@ import NumberTextField from "../controls/textfields/NumberTextField";
 import { isValueExists } from "../../utils";
 import Message from "../controls/Message";
 import Prompt from "../controls/dialog/Prompt";
-import CustomDatePicker from "../controls/pickers/CustomDatePicker";
+// import CustomDatePicker from "../controls/pickers/CustomDatePicker";
 
 // eslint-disable-next-line
 const styles = theme => ({
@@ -24,110 +24,108 @@ const styles = theme => ({
   }
 });
 
-class AddNewExpense extends Component {
-  initialData = {
+const AddNewExpense = ({ classes }) => {
+  const initialData = {
     expenseTypeId: "",
     description: "",
     amount: "",
     spentAt: ""
   };
 
-  state = {
-    data: this.initialData,
-    errors: {},
-    isLoading: false,
-    expenseTypeIds: [],
-    showMessage: false,
-    isEdit: false,
-    showMessageDialog: false
-  };
+  const [data, setData] = useState(initialData);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [expenseTypeIds, setExpenseTypeIds] = useState([]);
+  const [showMessage, setShowMessage] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
 
-  async componentDidMount() {
-    this.setState({ isLoading: true });
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const idRef = useRef(null);
 
-    try {
-      const stateToUpdate = {};
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
 
-      const res = await api.expenseType.fetchAll();
-      const expenseTypeIds = res.data.map(d => ({
-        value: d.id,
-        label: d.id
-      }));
+      try {
+        const res = await api.expenseType.fetchAll();
+        const expenseTypeIds = res.data.map(d => ({
+          value: d.id,
+          label: d.id
+        }));
 
-      stateToUpdate.expenseTypeIds = expenseTypeIds;
-      stateToUpdate.isLoading = false;
+        setExpenseTypeIds(expenseTypeIds);
+        setIsLoading(false);
 
-      const { id } = this.props.match.params;
-
-      if (id) {
-        const res2 = await api.expense.fetchById(id);
-        const expenseToEdit = res2.data;
-        stateToUpdate.data = expenseToEdit;
-        stateToUpdate.isEdit = true;
+        if (id) {
+          const res2 = await api.expense.fetchById(id);
+          const expenseToEdit = res2.data;
+          setData(expenseToEdit);
+          setIsEdit(true);
+        }
+      } catch (error) {
+        showError(error);
       }
+    };
 
-      this.setState({ ...stateToUpdate });
-    } catch (error) {
-      this.showError(error);
-    }
-  }
+    fetchData();
+  }, [id]);
 
-  onChange = e => {
-    this.setState({
-      data: { ...this.state.data, [e.target.name]: e.target.value },
-      errors: { ...this.state.errors, [e.target.name]: "" }
-    });
+  const onChange = e => {
+    setData({ ...data, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  onExpenseTypeDropdownChange = value => {
+  const onExpenseTypeDropdownChange = value => {
     const expenseTypeId = value === null ? "" : value;
 
-    this.setState({
-      data: { ...this.state.data, expenseTypeId },
-      errors: { ...this.state.errors, expenseTypeId: "" }
-    });
+    setData({ ...data, expenseTypeId });
+    setErrors({ ...errors, expenseTypeId: "" });
   };
 
-  onCancelClick = () => {
-    const isDirty = !equal(this.initialData, this.state.data);
+  const onCancelClick = () => {
+    const isDirty = !equal(initialData, data);
 
-    if (isDirty === true && this.state.isEdit === false) {
-      this.clearForm();
+    if (isDirty && !isEdit) {
+      clearForm();
       return;
     }
 
-    this.props.history.goBack();
+    navigate(-1);
   };
 
-  onSubmit = async e => {
+  const onSubmit = async e => {
     e.preventDefault();
 
-    const errors = isValueExists(this.state.data);
+    const validationErrors = isValueExists(data);
 
-    if (Object.keys(errors).length > 0) {
-      this.setState({ errors });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
     try {
-      this.state.data.amount = Number(this.state.data.amount);
+      data.amount = Number(data.amount);
 
-      if (this.state.isEdit === false) {
-        await this.createNew(this.state.data);
+      if (!isEdit) {
+        await createNew(data);
       } else {
-        await this.update(this.state.data);
+        await update(data);
       }
     } catch (error) {
-      this.showError(error);
+      showError(error);
     }
   };
 
-  createNew = async data => {
+  const createNew = async data => {
     const res = await api.expense.createNew(data);
 
     if (res.status === 200) {
-      this.showMessage("Saved successfully");
-      this.clearForm();
+      showMessageHandler("Saved successfully");
+      clearForm();
     } else {
       throw new Error(
         `Unable to create the record. The status code is ${res.status}`
@@ -135,135 +133,110 @@ class AddNewExpense extends Component {
     }
   };
 
-  update = async data => {
-    const res = await api.expense.update(this.props.match.params.id, data);
+  const update = async data => {
+    const res = await api.expense.update(id, data);
 
     if (res.status === 200) {
-      this.clearForm(true);
+      clearForm(true);
     } else {
       throw new Error(`Unable to update. The status code is ${res.status}`);
     }
   };
 
-  clearForm = (canShowMessageDialog = false) => {
-    this.setState({
-      data: this.initialData,
-      showMessageDialog: canShowMessageDialog
-    });
+  const clearForm = (canShowMessageDialog = false) => {
+    setData(initialData);
+    setShowMessageDialog(canShowMessageDialog);
 
-    if (this.idRef) {
-      this.idRef.focus();
+    if (idRef.current) {
+      idRef.current.focus();
     }
   };
 
-  onMessageCloseClick = () => {
-    this.setState({
-      showMessage: false,
-      message: "",
-      isError: false
-    });
+  const onMessageCloseClick = () => {
+    setShowMessage(false);
+    setMessage("");
+    setIsError(false);
   };
 
-  showMessage = message => {
-    this.setState({
-      showMessage: true,
-      message,
-      isError: false
-    });
+  const showMessageHandler = message => {
+    setShowMessage(true);
+    setMessage(message);
+    setIsError(false);
   };
 
-  showError = error => {
-    this.setState({
-      showMessage: true,
-      message: error.message,
-      isError: true,
-      isLoading: false
-    });
+  const showError = error => {
+    setShowMessage(true);
+    setMessage(error.message);
+    setIsError(true);
+    setIsLoading(false);
   };
 
-  onMessageDialogCloseClick = () => {
-    this.setState({ showMessageDialog: false });
-    this.props.history.goBack();
+  const onMessageDialogCloseClick = () => {
+    setShowMessageDialog(false);
+    navigate(-1);
   };
 
-  render() {
-    const {
-      data,
-      errors,
-      isLoading,
-      expenseTypeIds,
-      showMessage,
-      isError,
-      message,
-      isEdit,
-      showMessageDialog
-    } = this.state;
+  const handleDateChange = date => {
+    setData({ ...data, spentAt: date });
+    setErrors({ ...errors, spentAt: "" });
+  };
 
-    return (
-      <Container title={isEdit ? "Edit Expense" : "New Expense"}>
-        <Prompt
-          message="The expense you entered was saved successfully."
-          open={showMessageDialog}
-          handleClose={this.onMessageDialogCloseClick}
-        />
-        <CircularLoader isLoading={isLoading} />
-        <Message
-          title="Message"
-          message={message}
-          show={showMessage}
-          isError={isError}
-          onCloseClick={this.onMessageCloseClick}
-          autoClose={!isError}
+  return (
+    <Container title={isEdit ? "Edit Expense" : "New Expense"}>
+      <Prompt
+        message="The expense you entered was saved successfully."
+        open={showMessageDialog}
+        handleClose={onMessageDialogCloseClick}
+      />
+      <CircularLoader isLoading={isLoading} />
+      <Message
+        title="Message"
+        message={message}
+        show={showMessage}
+        isError={isError}
+        onCloseClick={onMessageCloseClick}
+        autoClose={!isError}
+      />
+
+      <Form id="expense" onSubmit={onSubmit} onCancel={onCancelClick}>
+        <CustomTextField
+          inputRef={idRef}
+          error={!!errors.description}
+          name="description"
+          value={data.description}
+          label="Expense description"
+          onChange={onChange}
         />
 
-        <Form
-          id="expense"
-          onSubmit={this.onSubmit}
-          onCancel={this.onCancelClick}
-        >
-          <CustomTextField
-            inputRef={input => {
-              this.idRef = input;
-            }}
-            error={!!errors.description}
-            name="description"
-            value={data.description}
-            label="Expense description"
-            onChange={this.onChange}
-          />
+        <Dropdown
+          name="expenseType"
+          value={data.expenseTypeId}
+          error={!!errors.expenseType}
+          datasource={expenseTypeIds}
+          onChange={onExpenseTypeDropdownChange}
+          placeholder=""
+          label="Expense type"
+        />
 
-          <Dropdown
-            name="expenseType"
-            value={data.expenseTypeId}
-            error={!!errors.expenseType}
-            datasource={expenseTypeIds}
-            onChange={this.onExpenseTypeDropdownChange}
-            placeholder=""
-            label="Expense type"
-          />
+        <NumberTextField
+          error={!!errors.amount}
+          name="amount"
+          value={data.amount}
+          label="Amount"
+          onChange={onChange}
+        />
 
-          <NumberTextField
-            error={!!errors.amount}
-            name="amount"
-            value={data.amount}
-            label="Amount"
-            onChange={this.onChange}
-          />
+        {/* <CustomDatePicker
+          error={!!errors.spentAt}
+          name="spentAt"
+          label="Spent At"
+          value={data.spentAt}
+          showTodayButton={true}
+          handleDateChange={handleDateChange}
+        /> */}
+      </Form>
+    </Container>
+  );
+};
 
-          <CustomDatePicker
-            error={!!errors.spentAt}
-            name="spentAt"
-            label="Spent At"
-            value={data.spentAt}
-            showTodayButton={true}
-            handleDateChange={this.onChange}
-          />
-        </Form>
-      </Container>
-    );
-  }
-}
-
-const component = withStyles(styles, { withTheme: true })(AddNewExpense);
-
-export default withRouter(component);
+export default withStyles(styles, { withTheme: true })(AddNewExpense);

@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import currency from "currency.js";
 import { connect } from "react-redux";
-import { withStyles } from "material-ui/styles";
-import { Paper } from "material-ui";
-import Table from "material-ui/Table";
+import { withStyles } from "@mui/styles";
+import { Paper } from "@mui/material";
+import Table from "@mui/material/Table";
 import YesNo from "../../../controls/dialog/YesNo";
 import EditCartItem from "../editCartItem/EditCartItem";
 import CartHeader from "./cartHeader";

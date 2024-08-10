@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import { withStyles } from "material-ui/styles";
-import { InputAdornment } from "material-ui/Input";
-import IconButton from "material-ui/IconButton";
-import Search from "material-ui-icons/Search";
+import { withStyles } from "@mui/styles";
+import { InputAdornment } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Search from "@mui/icons-material/Search";
 import CustomTextField from "./textfields/CustomTextField";
 
 // eslint-disable-next-line
@@ -23,7 +23,7 @@ const styles = theme => ({
 class Searchbox extends Component {
   state = { id: "" };
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.clear) {
       this.setState({ id: "" });
     }

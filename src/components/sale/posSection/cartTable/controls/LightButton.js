@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "material-ui";
+import { Button } from "@mui/material";
 
 const LightButton = ({ text, onClick }) => (
   <Button style={{ textTransform: "none", padding: 0 }} onClick={onClick}>

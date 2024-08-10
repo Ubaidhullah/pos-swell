@@ -1,7 +1,7 @@
 import React, { Fragment } from "react";
 import classNames from "classnames";
-import { withStyles } from "material-ui/styles";
-import TextField from "material-ui/TextField";
+import { withStyles } from "@mui/styles";
+import TextField from "@mui/material/TextField";
 import NumberFormatCustom from "./NumberFormatCustom";
 
 // eslint-disable-next-line

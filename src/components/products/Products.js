@@ -1,6 +1,6 @@
-import React, { Component } from "react";
-import { withRouter } from "react-router";
-import { withStyles } from "material-ui/styles";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { withStyles } from "@mui/styles";
 import CustomTabs from "../controls/Tabs";
 import TabContainer from "../controls/TabContainer";
 import ProductTab from "./ProductTab";
@@ -25,54 +25,49 @@ const styles = theme => ({
   }
 });
 
-class Products extends Component {
-  state = {
-    value: 0
-  };
+const Products = ({ classes }) => {
+  const [value, setValue] = useState(0);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  componentDidMount() {
-    if (this.props.history.location.pathname === "/products") {
-      this.setState({ value: 0 });
+  useEffect(() => {
+    if (location.pathname === "/products") {
+      setValue(0);
     } else {
-      this.setState({ value: 1 });
+      setValue(1);
     }
-  }
+  }, [location.pathname]);
 
-  handleChange = (event, value) => {
+  const handleChange = (event, value) => {
     if (value === 0) {
-      this.props.history.push("/products");
+      navigate("/products");
     } else {
-      this.props.history.push("/producttypes");
+      navigate("/producttypes");
     }
-    this.setState({ value });
+    setValue(value);
   };
 
-  render() {
-    const { classes } = this.props;
-    const { value } = this.state;
-
-    return (
-      <div>
-        <div className={classes.tabHolder}>
-          <CustomTabs
-            onChange={this.handleChange}
-            value={value}
-            items={["Products", "Product Types"]}
-          />
-          {value === 0 && (
-            <TabContainer>
-              <ProductTab />
-            </TabContainer>
-          )}
-          {value === 1 && (
-            <TabContainer>
-              <ProductTypeTab />
-            </TabContainer>
-          )}
-        </div>
+  return (
+    <div>
+      <div className={classes.tabHolder}>
+        <CustomTabs
+          onChange={handleChange}
+          value={value}
+          items={["Products", "Product Types"]}
+        />
+        {value === 0 && (
+          <TabContainer>
+            <ProductTab />
+          </TabContainer>
+        )}
+        {value === 1 && (
+          <TabContainer>
+            <ProductTypeTab />
+          </TabContainer>
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
-export default withRouter(withStyles(styles, { withTheme: true })(Products));
+export default withStyles(styles, { withTheme: true })(Products);

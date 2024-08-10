@@ -1,10 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { withStyles } from "material-ui/styles";
-import "react-select/dist/react-select.css";
-import CustomTextField from "../textfields/CustomTextField";
+import { withStyles } from "@mui/styles";
+import 'react-select/dist/react-select.min.css';
 import SelectWrapped from "./SelectWrapped";
 import styles from "./styles";
+import CustomTextField from "../textfields/CustomTextField";  // Import CustomTextField
 
 const Dropdown = props => {
   const { classes, datasource, ...rest } = props;
@@ -13,8 +13,6 @@ const Dropdown = props => {
     <CustomTextField
       {...rest}
       fullWidth
-      // value={this.state.selectedValue}
-      // onChange={this.handleChange}
       name="react-select-chip-label"
       InputLabelProps={{
         shrink: true
@@ -34,8 +32,8 @@ const Dropdown = props => {
 };
 
 Dropdown.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
-  classes: PropTypes.object.isRequired
+  classes: PropTypes.object.isRequired,
+  datasource: PropTypes.array.isRequired,  // Add prop type validation for datasource
 };
 
 export default withStyles(styles)(Dropdown);

@@ -1,7 +1,7 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as equal from "fast-deep-equal";
-import { withRouter } from "react-router";
-import { withStyles } from "material-ui/styles";
+import { useNavigate, useParams } from "react-router-dom";
+import { withStyles } from "@mui/styles";
 import Container from "../controls/Container";
 import Form from "../controls/Form";
 import CustomTextField from "../controls/textfields/CustomTextField";
@@ -23,8 +23,8 @@ const styles = theme => ({
   }
 });
 
-class AddNewProduct extends Component {
-  initialData = {
+const AddNewProduct = ({ classes }) => {
+  const initialData = {
     id: "",
     name: "",
     description: "",
@@ -33,265 +33,231 @@ class AddNewProduct extends Component {
     productTypeId: ""
   };
 
-  state = {
-    data: this.initialData,
-    errors: {},
-    isLoading: false,
-    productTypeIds: [],
-    showMessage: false,
-    isEdit: false,
-    showMessageDialog: false
-  };
+  const [data, setData] = useState(initialData);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [productTypeIds, setProductTypeIds] = useState([]);
+  const [showMessage, setShowMessage] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
 
-  constructor(props) {
-    super(props);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const idRef = useRef(null);
+
+  useEffect(() => {
     window.onbeforeunload = () => {
-      sessionStorage.setItem("form", JSON.stringify(this.state.data));
+      sessionStorage.setItem("form", JSON.stringify(data));
     };
-  }
 
-  async componentDidMount() {
-    this.setState({ isLoading: true });
+    const fetchData = async () => {
+      setIsLoading(true);
 
-    try {
-      const stateToUpdate = {};
+      try {
+        const res = await api.productType.fetchAll();
+        const productTypeIds = res.data.map(d => ({
+          value: d.id,
+          label: d.id
+        }));
 
-      const res = await api.productType.fetchAll();
-      const productTypeIds = res.data.map(d => ({
-        value: d.id,
-        label: d.id
-      }));
+        setProductTypeIds(productTypeIds);
+        setIsLoading(false);
 
-      stateToUpdate.productTypeIds = productTypeIds;
-      stateToUpdate.isLoading = false;
-
-      const { id } = this.props.match.params;
-
-      if (id) {
-        const res2 = await api.product.fetchById(id);
-        const productToEdit = res2.data;
-        stateToUpdate.data = productToEdit;
-        stateToUpdate.isEdit = true;
+        if (id) {
+          const res2 = await api.product.fetchById(id);
+          const productToEdit = res2.data;
+          setData(productToEdit);
+          setIsEdit(true);
+        }
+      } catch (error) {
+        showError(error);
       }
+    };
 
-      this.setState({ ...stateToUpdate });
-    } catch (error) {
-      this.showError(error);
-    }
-  }
+    fetchData();
+  }, [id]);
 
-  onChange = e => {
-    this.setState({
-      data: { ...this.state.data, [e.target.name]: e.target.value },
-      errors: { ...this.state.errors, [e.target.name]: "" }
-    });
+  const onChange = e => {
+    setData({ ...data, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  onProductTypeDropdownChange = value => {
+  const onProductTypeDropdownChange = value => {
     const productTypeId = value === null ? "" : value;
-
-    this.setState({
-      data: { ...this.state.data, productTypeId },
-      errors: { ...this.state.errors, productTypeId: "" }
-    });
+    setData({ ...data, productTypeId });
+    setErrors({ ...errors, productTypeId: "" });
   };
 
-  onCancelClick = () => {
-    const isDirty = !equal(this.initialData, this.state.data);
+  const onCancelClick = () => {
+    const isDirty = !equal(initialData, data);
 
-    if (isDirty === true && this.state.isEdit === false) {
-      this.clearForm();
+    if (isDirty && !isEdit) {
+      clearForm();
       return;
     }
 
-    this.props.history.goBack();
+    navigate(-1);
   };
 
-  onSubmit = async e => {
+  const onSubmit = async e => {
     e.preventDefault();
 
-    const errors = isValueExists(this.state.data);
+    const validationErrors = isValueExists(data);
 
-    if (Object.keys(errors).length > 0) {
-      this.setState({ errors });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
     try {
-      this.state.data.costPrice = Number(this.state.data.costPrice);
-      this.state.data.sellingPrice = Number(this.state.data.sellingPrice);
+      data.costPrice = Number(data.costPrice);
+      data.sellingPrice = Number(data.sellingPrice);
 
-      if (this.state.isEdit === false) {
-        await this.createNew(this.state.data);
+      if (!isEdit) {
+        await createNew(data);
       } else {
-        await this.update(this.state.data);
+        await update(data);
       }
     } catch (error) {
-      this.showError(error);
+      showError(error);
     }
   };
 
-  createNew = async data => {
+  const createNew = async data => {
     const res = await api.product.createNew(data);
 
     if (res.status === 200) {
-      this.showMessage("Saved successfully");
-      this.clearForm();
+      showMessageHandler("Saved successfully");
+      clearForm();
     } else {
-      throw new Error(
-        `Unable to create the record. The status code is ${res.status}`
-      );
+      throw new Error(`Unable to create the record. The status code is ${res.status}`);
     }
   };
 
-  update = async data => {
-    const res = await api.product.update(this.props.match.params.id, data);
+  const update = async data => {
+    const res = await api.product.update(id, data);
 
     if (res.status === 200) {
-      this.clearForm(true);
+      clearForm(true);
     } else {
       throw new Error(`Unable to update. The status code is ${res.status}`);
     }
   };
 
-  clearForm = (canShowMessageDialog = false) => {
-    this.setState({
-      data: this.initialData,
-      showMessageDialog: canShowMessageDialog
-    });
+  const clearForm = (canShowMessageDialog = false) => {
+    setData(initialData);
+    setShowMessageDialog(canShowMessageDialog);
 
-    if (this.idRef) {
-      this.idRef.focus();
+    if (idRef.current) {
+      idRef.current.focus();
     }
   };
 
-  onMessageCloseClick = () => {
-    this.setState({
-      showMessage: false,
-      message: "",
-      isError: false
-    });
+  const onMessageCloseClick = () => {
+    setShowMessage(false);
+    setMessage("");
+    setIsError(false);
   };
 
-  showMessage = message => {
-    this.setState({
-      showMessage: true,
-      message,
-      isError: false
-    });
+  const showMessageHandler = (message, isError = false) => {
+    setShowMessage(true);
+    setMessage(message);
+    setIsError(isError);
+    setIsLoading(false);
   };
 
-  showError = error => {
-    this.setState({
-      showMessage: true,
-      message: error.message,
-      isError: true,
-      isLoading: false
-    });
+  const showError = error => {
+    setShowMessage(true);
+    setMessage(error.message);
+    setIsError(true);
+    setIsLoading(false);
   };
 
-  onMessageDialogCloseClick = () => {
-    this.setState({ showMessageDialog: false });
-    this.props.history.goBack();
+  const onMessageDialogCloseClick = () => {
+    setShowMessageDialog(false);
+    navigate(-1);
   };
 
-  render() {
-    const { classes } = this.props;
-    const {
-      data,
-      errors,
-      isLoading,
-      productTypeIds,
-      showMessage,
-      isError,
-      message,
-      isEdit,
-      showMessageDialog
-    } = this.state;
+  return (
+    <Container title={isEdit ? "Edit Product" : "New Product"}>
+      <Prompt
+        message="The product you entered was saved successfully."
+        open={showMessageDialog}
+        handleClose={onMessageDialogCloseClick}
+      />
+      <CircularLoader isLoading={isLoading} />
+      <Message
+        title="Message"
+        message={message}
+        show={showMessage}
+        isError={isError}
+        onCloseClick={onMessageCloseClick}
+        autoClose={!isError}
+      />
 
-    return (
-      <Container title={isEdit ? "Edit Product" : "New Product"}>
-        <Prompt
-          message="The product you entered was saved successfully."
-          open={showMessageDialog}
-          handleClose={this.onMessageDialogCloseClick}
-        />
-        <CircularLoader isLoading={isLoading} />
-        <Message
-          title="Message"
-          message={message}
-          show={showMessage}
-          isError={isError}
-          onCloseClick={this.onMessageCloseClick}
-          autoClose={!isError}
+      <Form
+        id="product"
+        onSubmit={onSubmit}
+        onCancel={onCancelClick}
+        className={classes.form}
+      >
+        <CustomTextField
+          inputRef={idRef}
+          error={!!errors.id}
+          name="id"
+          value={data.id}
+          label="Product Id"
+          helperText="This should be unique"
+          onChange={onChange}
+          disabled={isEdit}
         />
 
-        <Form
-          id="product"
-          onSubmit={this.onSubmit}
-          onCancel={this.onCancelClick}
-          className={classes.form}
-        >
-          <CustomTextField
-            inputRef={input => {
-              this.idRef = input;
-            }}
-            error={!!errors.id}
-            name="id"
-            value={data.id}
-            label="Product Id"
-            helperText="This should be unique"
-            onChange={this.onChange}
-            disabled={isEdit}
-          />
+        <CustomTextField
+          error={!!errors.name}
+          name="name"
+          value={data.name}
+          label="Name"
+          onChange={onChange}
+        />
 
-          <CustomTextField
-            error={!!errors.name}
-            name="name"
-            value={data.name}
-            label="Name"
-            onChange={this.onChange}
-          />
+        <Dropdown
+          name="productType"
+          value={data.productTypeId}
+          error={!!errors.productType}
+          datasource={productTypeIds}
+          onChange={onProductTypeDropdownChange}
+          placeholder=""
+          label="Product type"
+        />
 
-          <Dropdown
-            name="productType"
-            value={data.productTypeId}
-            error={!!errors.productType}
-            datasource={productTypeIds}
-            onChange={this.onProductTypeDropdownChange}
-            placeholder=""
-            label="Product type"
-          />
+        <CustomTextField
+          error={!!errors.description}
+          name="description"
+          value={data.description}
+          label="Description"
+          onChange={onChange}
+        />
 
-          <CustomTextField
-            error={!!errors.description}
-            name="description"
-            value={data.description}
-            label="Description"
-            onChange={this.onChange}
-          />
+        <NumberTextField
+          error={!!errors.costPrice}
+          name="costPrice"
+          value={data.costPrice}
+          label="Cost price"
+          onChange={onChange}
+        />
 
-          <NumberTextField
-            error={!!errors.costPrice}
-            name="costPrice"
-            value={data.costPrice}
-            label="Cost price"
-            onChange={this.onChange}
-          />
+        <NumberTextField
+          error={!!errors.sellingPrice}
+          name="sellingPrice"
+          value={data.sellingPrice}
+          label="Selling price"
+          onChange={onChange}
+        />
+      </Form>
+    </Container>
+  );
+};
 
-          <NumberTextField
-            error={!!errors.sellingPrice}
-            name="sellingPrice"
-            value={data.sellingPrice}
-            label="Selling price"
-            onChange={this.onChange}
-          />
-        </Form>
-      </Container>
-    );
-  }
-}
-
-const component = withStyles(styles, { withTheme: true })(AddNewProduct);
-
-export default withRouter(component);
+export default withStyles(styles, { withTheme: true })(AddNewProduct);

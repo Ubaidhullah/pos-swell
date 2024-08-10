@@ -1,6 +1,6 @@
 import React from "react";
-import { CircularProgress } from "material-ui/Progress";
-import { withStyles } from "material-ui/styles";
+import CircularProgress from '@mui/material/CircularProgress';
+import { withStyles } from "@mui/styles";
 import Overlay from "../Overlay";
 
 const styles = () => ({

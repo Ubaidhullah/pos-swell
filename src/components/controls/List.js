@@ -1,5 +1,5 @@
 import React from "react";
-import { ListItemIcon, ListItemText } from "material-ui/List";
+import { ListItemIcon, ListItemText } from "@mui/material/List";
 
 export const CustomListItemIcon = props => {
   const { children, ...rest } = props;

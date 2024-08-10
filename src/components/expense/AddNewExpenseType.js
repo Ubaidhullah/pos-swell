@@ -1,6 +1,6 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as equal from "fast-deep-equal";
-import { withRouter } from "react-router";
+import { useNavigate, useParams } from "react-router-dom";
 import Container from "../controls/Container";
 import Form from "../controls/Form";
 import CustomTextField from "../controls/textfields/CustomTextField";
@@ -10,89 +10,88 @@ import Message from "../controls/Message";
 import Prompt from "../controls/dialog/Prompt";
 import CircularLoader from "../controls/loader/CircularLoader";
 
-class AddNewExpenseType extends Component {
-  initialData = {
+const AddNewExpenseType = () => {
+  const initialData = {
     id: "",
     description: ""
   };
 
-  state = {
-    data: this.initialData,
-    showMessage: false,
-    errors: {},
-    showMessageDialog: false,
-    isLoading: false,
-    isEdit: false
-  };
+  const [data, setData] = useState(initialData);
+  const [showMessage, setShowMessage] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
 
-  async componentDidMount() {
-    try {
-      const { id } = this.props.match.params;
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const idRef = useRef(null);
 
-      if (!id) {
-        return;
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+
+      setIsLoading(true);
+
+      try {
+        const res = await api.expenseType.fetchById(id);
+        setData(res.data);
+        setIsEdit(true);
+      } catch (error) {
+        showMessageHandler(error.message, true);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      this.setState({ isLoading: true });
+    fetchData();
+  }, [id]);
 
-      const stateToUpdate = {};
-      const res = await api.expenseType.fetchById(id);
-
-      stateToUpdate.data = res.data;
-      stateToUpdate.isLoading = false;
-      stateToUpdate.isEdit = true;
-
-      this.setState({ ...stateToUpdate });
-    } catch (error) {
-      this.showMessage(error.message, true);
-    }
-  }
-
-  onChange = e => {
-    this.setState({
-      data: { ...this.state.data, [e.target.name]: e.target.value },
-      errors: { ...this.state.errors, [e.target.name]: "" }
-    });
+  const onChange = e => {
+    setData({ ...data, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  onCancelClick = () => {
-    const isDirty = !equal(this.initialData, this.state.data);
+  const onCancelClick = () => {
+    const isDirty = !equal(initialData, data);
 
-    if (isDirty === true && this.state.isEdit === false) {
-      this.clearForm();
+    if (isDirty && !isEdit) {
+      clearForm();
       return;
     }
 
-    this.props.history.goBack();
+    navigate(-1);
   };
 
-  onSubmit = async e => {
+  const onSubmit = async e => {
     e.preventDefault();
 
-    const errors = isValueExists(this.state.data, ["description"]);
+    const validationErrors = isValueExists(data, ["description"]);
 
-    if (Object.keys(errors).length > 0) {
-      this.setState({ errors });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
     try {
-      if (this.state.isEdit === true) {
-        await this.update();
+      if (isEdit) {
+        await update();
       } else {
-        await this.createNew();
+        await createNew();
       }
     } catch (error) {
-      this.showMessage(error.message, true);
+      showMessageHandler(error.message, true);
     }
   };
 
-  createNew = async () => {
-    const res = await api.expenseType.createNew(this.state.data);
+  const createNew = async () => {
+    const res = await api.expenseType.createNew(data);
 
     if (res.status === 200) {
-      this.showMessage("Saved successfully");
-      this.clearForm();
+      showMessageHandler("Saved successfully");
+      clearForm();
     } else {
       throw new Error(
         `Unable to create the record. The status code is ${res.status}`
@@ -100,110 +99,83 @@ class AddNewExpenseType extends Component {
     }
   };
 
-  update = async () => {
-    const res = await api.expenseType.update(
-      this.props.match.params.id,
-      this.state.data
-    );
+  const update = async () => {
+    const res = await api.expenseType.update(id, data);
 
     if (res.status === 200) {
-      this.clearForm(true);
+      clearForm(true);
     } else {
       throw new Error(`Unable to update. The status code is ${res.status}`);
     }
   };
-  clearForm = (canShowMessageDialog = false) => {
-    this.setState({
-      data: this.initialData,
-      showMessageDialog: canShowMessageDialog
-    });
 
-    if (this.idRef) {
-      this.idRef.focus();
+  const clearForm = (canShowMessageDialog = false) => {
+    setData(initialData);
+    setShowMessageDialog(canShowMessageDialog);
+
+    if (idRef.current) {
+      idRef.current.focus();
     }
   };
 
-  onMessageCloseClick = () => {
-    this.setState({
-      showMessage: false,
-      message: "",
-      isError: false
-    });
+  const onMessageCloseClick = () => {
+    setShowMessage(false);
+    setMessage("");
+    setIsError(false);
   };
 
-  showMessage = (message, isError = false) => {
-    this.setState({
-      showMessage: true,
-      message,
-      isError,
-      isLoading: false
-    });
+  const showMessageHandler = (message, isError = false) => {
+    setShowMessage(true);
+    setMessage(message);
+    setIsError(isError);
+    setIsLoading(false);
   };
 
-  onMessageDialogCloseClick = () => {
-    this.setState({ showMessageDialog: false });
-    this.props.history.goBack();
+  const onMessageDialogCloseClick = () => {
+    setShowMessageDialog(false);
+    navigate(-1);
   };
 
-  render() {
-    const {
-      data,
-      errors,
-      showMessage,
-      isError,
-      message,
-      showMessageDialog,
-      isLoading,
-      isEdit
-    } = this.state;
+  return (
+    <Container title={isEdit ? "Edit expense type" : "New expense type"}>
+      <Message
+        title="Message"
+        message={message}
+        show={showMessage}
+        isError={isError}
+        autoClose={!isError}
+        onCloseClick={onMessageCloseClick}
+      />
 
-    return (
-      <Container title={isEdit ? "Edit expense type" : "New expense type"}>
-        <Message
-          title="Message"
-          message={message}
-          show={showMessage}
-          isError={isError}
-          autoClose={!isError}
-          onCloseClick={this.onMessageCloseClick}
+      <Prompt
+        message="The expense type you entered was saved successfully."
+        open={showMessageDialog}
+        handleClose={onMessageDialogCloseClick}
+      />
+      <CircularLoader isLoading={isLoading} />
+
+      <Form id="expenseType" onSubmit={onSubmit} onCancel={onCancelClick}>
+        <CustomTextField
+          inputRef={idRef}
+          error={!!errors.id}
+          name="id"
+          value={data.id}
+          label="Expense type Id"
+          helperText="This should be unique"
+          onChange={onChange}
+          disabled={isEdit}
         />
+        <br />
 
-        <Prompt
-          message="The expense type you entered was saved successfully."
-          open={showMessageDialog}
-          handleClose={this.onMessageDialogCloseClick}
+        <CustomTextField
+          name="description"
+          value={data.description}
+          label="Description"
+          onChange={onChange}
         />
-        <CircularLoader isLoading={isLoading} />
+      </Form>
+    </Container>
+  );
+};
 
-        <Form
-          id="expenseType"
-          onSubmit={this.onSubmit}
-          onCancel={this.onCancelClick}
-        >
-          <CustomTextField
-            inputRef={input => {
-              this.idRef = input;
-            }}
-            error={!!errors.id}
-            name="id"
-            value={data.id}
-            label="Expense type Id"
-            helperText="This should be unique"
-            onChange={this.onChange}
-            disabled={isEdit}
-          />
-          <br />
-
-          <CustomTextField
-            name="description"
-            value={data.description}
-            label="Description"
-            onChange={this.onChange}
-          />
-        </Form>
-      </Container>
-    );
-  }
-}
-
-export default withRouter(AddNewExpenseType);
+export default AddNewExpenseType;

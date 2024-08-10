@@ -1,7 +1,7 @@
-import React, { Component } from "react";
-import Button from "material-ui/Button";
-import { withRouter } from "react-router";
-import { withStyles } from "material-ui/styles";
+import React, { useState } from "react";
+import Button from "@mui/material/Button";
+import { useNavigate } from "react-router-dom";
+import { withStyles } from "@mui/styles";
 import Searchbox from "../controls/Searchbox";
 import api from "../../api";
 import ApiAutoFetchDatagrid from "../controls/datagrid/ApiAutoFetchDatagrid";
@@ -25,8 +25,8 @@ const styles = theme => ({
   }
 });
 
-class ProductTab extends Component {
-  productColumns = [
+const ProductTab = ({ classes }) => {
+  const productColumns = [
     "ID",
     "Name",
     "Description",
@@ -35,77 +35,76 @@ class ProductTab extends Component {
     "Type"
   ];
 
-  state = {
-    clearSearch: false,
-    serachQuery: "",
-    showConfirmDeleteDialog: false,
-    isLoading: false,
-    message: "",
-    showMessage: false,
-    isError: false
+  const [clearSearch, setClearSearch] = useState(false);
+  const [serachQuery, setSerachQuery] = useState("");
+  const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [showMessage, setShowMessage] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+
+  const navigate = useNavigate();
+
+  const onListClick = () => {
+    setClearSearch(true);
+    setSerachQuery("");
+    setShowMessage(false);
   };
 
-  onListClick = () => {
-    this.setState({ clearSearch: true, serachQuery: "", showMessage: false });
+  const onSearchSubmit = async id => {
+    setClearSearch(false);
+    setSerachQuery(id);
   };
 
-  onSearchSubmit = async id => {
-    this.setState({ clearSearch: false, serachQuery: id });
+  const onCreateNewClick = () => {
+    navigate("products/new");
   };
 
-  onCreateNewClick = () => {
-    this.props.history.push("products/new");
+  const onEdit = row => {
+    navigate(`products/edit/${row.id}`);
   };
 
-  onEdit = row => {
-    this.props.history.push(`products/edit/${row.id}`);
+  const onDelete = itemToDelete => {
+    setShowConfirmDeleteDialog(true);
+    setItemToDelete(itemToDelete);
   };
 
-  onDelete = itemToDelete => {
-    this.setState({ showConfirmDeleteDialog: true, itemToDelete });
-  };
-
-  onConfirmDeleteClick = async () => {
-    const { id } = this.state.itemToDelete;
+  const onConfirmDeleteClick = async () => {
+    const { id } = itemToDelete;
 
     try {
-      this.setState({ isLoading: true });
+      setIsLoading(true);
 
       const res = await api.product.delete(id);
 
       if (res.status === 200) {
-        this.showMessage("Deleted successfully.");
+        displayMessage("Deleted successfully.");
       } else {
-        throw new Error(
-          `Couldn't delete the record. The status code is ${res.status}`
-        );
+        throw new Error(`Couldn't delete the record. The status code is ${res.status}`);
       }
     } catch (error) {
-      this.showMessage(error.message, true);
+      displayMessage(error.message, true);
     }
   };
 
-  onMessageCloseClick = () => {
-    this.setState({ showMessage: false });
+  const displayMessage = (message, isError = false) => {
+    setShowMessage(true);
+    setIsError(isError);
+    setMessage(message);
+    setIsLoading(false);
+    setShowConfirmDeleteDialog(false);
   };
 
-  onCancelConfirmDeleteClick = () => {
-    this.setState({ showConfirmDeleteDialog: false });
+  const onMessageCloseClick = () => {
+    setShowMessage(false);
   };
 
-  showMessage = (message, isError = false) => {
-    this.setState({
-      showMessage: true,
-      isError,
-      message,
-      isLoading: false,
-      showConfirmDeleteDialog: false
-    });
+  const onCancelConfirmDeleteClick = () => {
+    setShowConfirmDeleteDialog(false);
   };
 
-  getApiPromise = () => {
-    const { serachQuery } = this.state;
-
+  const getApiPromise = () => {
     if (serachQuery.length === 0) {
       return api.product.fetchByPages();
     }
@@ -113,75 +112,62 @@ class ProductTab extends Component {
     return api.product.searchByIdAndGetByPages(serachQuery);
   };
 
-  render() {
-    const {
-      clearSearch,
-      showConfirmDeleteDialog,
-      isLoading,
-      message,
-      showMessage,
-      isError
-    } = this.state;
-    const { classes } = this.props;
+  return (
+    <div className={classes.wrapper}>
+      <CircularLoader isLoading={isLoading} />
+      <YesNo
+        open={showConfirmDeleteDialog}
+        message="Are you sure wan't to delete the selected item"
+        onOk={onConfirmDeleteClick}
+        onCancel={onCancelConfirmDeleteClick}
+      />
+      <div>
+        <Button
+          className={classes.button}
+          variant="contained"
+          color="default"
+          size="small"
+          onClick={onListClick}
+        >
+          List
+        </Button>
 
-    return (
-      <div className={classes.wrapper}>
-        <CircularLoader isLoading={isLoading} />
-        <YesNo
-          open={showConfirmDeleteDialog}
-          message="Are you sure wan't to delete the selected item"
-          onOk={this.onConfirmDeleteClick}
-          onCancel={this.onCancelConfirmDeleteClick}
+        <Button
+          className={classes.button}
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={onCreateNewClick}
+        >
+          Create New
+        </Button>
+        <Searchbox
+          clear={clearSearch}
+          onSubmit={onSearchSubmit}
         />
-        <div>
-          <Button
-            className={classes.button}
-            variant="raised"
-            color="default"
-            size="small"
-            onClick={this.onListClick}
-          >
-            List
-          </Button>
-
-          <Button
-            className={classes.button}
-            variant="raised"
-            color="primary"
-            size="small"
-            onClick={this.onCreateNewClick}
-          >
-            Create New
-          </Button>
-          <Searchbox
-            clear={clearSearch}
-            onChange={this.onSearchChange}
-            onSubmit={this.onSearchSubmit}
-          />
-        </div>
-
-        <Message
-          style={{ width: "98%" }}
-          title="Message"
-          message={message}
-          show={showMessage}
-          isError={isError}
-          onCloseClick={this.onMessageCloseClick}
-          autoClose={!isError}
-        />
-
-        <div className={classes.wrapper}>
-          <ApiAutoFetchDatagrid
-            datasourcePromise={this.getApiPromise}
-            actions={["del", "edit"]}
-            onEdit={this.onEdit}
-            onDelete={this.onDelete}
-            headers={this.productColumns}
-          />
-        </div>
       </div>
-    );
-  }
-}
 
-export default withRouter(withStyles(styles, { withTheme: true })(ProductTab));
+      <Message
+        style={{ width: "98%" }}
+        title="Message"
+        message={message}
+        show={showMessage}
+        isError={isError}
+        onCloseClick={onMessageCloseClick}
+        autoClose={!isError}
+      />
+
+      <div className={classes.wrapper}>
+        <ApiAutoFetchDatagrid
+          datasourcePromise={getApiPromise}
+          actions={["del", "edit"]}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          headers={productColumns}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default withStyles(styles, { withTheme: true })(ProductTab);

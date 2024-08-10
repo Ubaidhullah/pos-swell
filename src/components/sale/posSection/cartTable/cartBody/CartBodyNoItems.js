@@ -1,5 +1,5 @@
 import React from "react";
-import { TableRow, TableBody } from "material-ui";
+import { TableRow, TableBody } from "@mui/material";
 import NoItemsTableCell from "./NoItemsTableCell";
 
 const CartBodyNoItems = () => (

@@ -1,5 +1,6 @@
 import React, { Component } from "react";
-import { MenuItem } from "material-ui/Menu";
+import MenuItem from '@mui/material/MenuItem';
+import Tab from '@mui/material/Tab';
 
 class Option extends Component {
   handleClick = event => {

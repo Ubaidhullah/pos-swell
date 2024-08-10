@@ -1,11 +1,12 @@
 import React from "react";
-import { withStyles } from "material-ui/styles";
-import Dialog from "material-ui/Dialog";
-import AppBar from "material-ui/AppBar";
-import Toolbar from "material-ui/Toolbar";
-import IconButton from "material-ui/IconButton";
-import CloseIcon from "@material-ui/icons/Close";
-import Slide from "material-ui/transitions/Slide";
+import { withStyles } from "@mui/styles";
+import Dialog from "@mui/material/Dialog";
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
+import Slide from '@mui/material/Slide';
+import Typography from '@mui/material/Typography'; // Import Typography
 
 const styles = {
   appBar: {
@@ -35,9 +36,9 @@ const FullPageDialog = ({ classes, open, handleClose, children, title }) => (
   >
     <AppBar className={classes.appBar}>
       <Toolbar>
-        <span variant="title" color="inherit" className={classes.title}>
+        <Typography variant="h6" color="inherit" className={classes.title}>
           {title}
-        </span>
+        </Typography>
         <IconButton color="inherit" onClick={handleClose} aria-label="Close">
           <CloseIcon />
         </IconButton>

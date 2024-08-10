@@ -1,6 +1,6 @@
 import React, { Fragment } from "react";
-import Divider from "material-ui/Divider";
-import { withStyles } from "material-ui";
+import Divider from "@mui/material/Divider";
+import { withStyles } from "@mui/styles";
 
 // eslint-disable-next-line
 const styles = theme => ({

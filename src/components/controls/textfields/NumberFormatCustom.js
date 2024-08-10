@@ -1,12 +1,12 @@
 import React from "react";
-import NumberFormat from "react-number-format";
+import { NumericFormat } from 'react-number-format';
 import PropTypes from "prop-types";
 
 function NumberFormatCustom(props) {
   const { inputRef, onChange, name, ...other } = props;
 
   return (
-    <NumberFormat
+    <NumericFormat
       {...other}
       ref={inputRef}
       onValueChange={values => {

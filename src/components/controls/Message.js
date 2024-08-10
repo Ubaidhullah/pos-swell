@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from "react";
-import { withStyles } from "material-ui/styles";
-import Clear from "material-ui-icons/Clear";
+import { withStyles } from "@mui/styles";
+import Clear from "@mui/icons-material/Clear";
 import classNames from "classnames";
 
 const styles = theme => ({

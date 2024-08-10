@@ -1,13 +1,13 @@
-import React, { Component } from "react";
-import Button from "material-ui/Button";
-import { withRouter } from "react-router";
-import { withStyles } from "material-ui/styles";
-import Container from "../controls/Container";
+import React, { useState } from "react";
+import { Button } from 'antd';
+import { useNavigate } from "react-router-dom";
+import { withStyles } from "@mui/styles";
+import { Card } from 'antd';
 import Searchbox from "../controls/Searchbox";
-import Message from "../controls/Message";
+import { Alert } from 'antd';
 import ApiAutoFetchDatagrid from "../controls/datagrid/ApiAutoFetchDatagrid";
 import api from "../../api";
-import CircularLoader from "../controls/loader/CircularLoader";
+import { Spin } from 'antd';
 import YesNo from "../controls/dialog/YesNo";
 
 const styles = theme => ({
@@ -26,80 +26,79 @@ const styles = theme => ({
   }
 });
 
-class Vendors extends Component {
-  vendorColumns = ["Id", "Name", "Description", "Address", "Mobile", "Email"];
+const Vendors = ({ classes }) => {
+  const vendorColumns = ["Id", "Name", "Description", "Address", "Mobile", "Email"];
 
-  state = {
-    clearSearch: false,
-    serachQuery: "",
-    message: "",
-    showMessage: false,
-    isError: false,
-    isLoading: false,
-    showConfirmDeleteDialog: false
+  const [clearSearch, setClearSearch] = useState(false);
+  const [serachQuery, setSerachQuery] = useState("");
+  const [message, setMessage] = useState("");
+  const [showMessage, setShowMessage] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+
+  const navigate = useNavigate();
+
+  const onListClick = () => {
+    setClearSearch(true);
+    setSerachQuery("");
+    setShowMessage(false);
   };
 
-  onListClick = () => {
-    this.setState({ clearSearch: true, serachQuery: "", showMessage: false });
+  const onSearchSubmit = async id => {
+    setClearSearch(false);
+    setSerachQuery(id);
   };
 
-  onSearchSubmit = async id => {
-    this.setState({ clearSearch: false, serachQuery: id });
+  const onCreateNewClick = () => {
+    navigate("Vendors/new");
   };
 
-  onCreateNewClick = () => {
-    this.props.history.push("Vendors/new");
+  const onEdit = row => {
+    navigate(`Vendors/edit/${row.id}`);
   };
 
-  onEdit = row => {
-    this.props.history.push(`Vendors/edit/${row.id}`);
+  const onDelete = itemToDelete => {
+    setShowConfirmDeleteDialog(true);
+    setItemToDelete(itemToDelete);
   };
 
-  onDelete = itemToDelete => {
-    this.setState({ showConfirmDeleteDialog: true, itemToDelete });
-  };
-
-  onConfirmDeleteClick = async () => {
-    const { id } = this.state.itemToDelete;
+  const onConfirmDeleteClick = async () => {
+    const { id } = itemToDelete;
 
     try {
-      this.setState({ isLoading: true });
+      setIsLoading(true);
 
       const res = await api.vendor.delete(id);
 
       if (res.status === 200) {
-        this.showMessage("Deleted successfully.");
+        displayMessage("Deleted successfully.");
       } else {
-        throw new Error(
-          `Couldn't delete the record. The status code is ${res.status}`
-        );
+        throw new Error(`Couldn't delete the record. The status code is ${res.status}`);
       }
     } catch (error) {
-      this.showMessage(error.message, true);
+      displayMessage(error.message, true);
     }
   };
 
-  showMessage = (message, isError = false) => {
-    this.setState({
-      showMessage: true,
-      isError,
-      message,
-      isLoading: false,
-      showConfirmDeleteDialog: false
-    });
+  const displayMessage = (message, isError = false) => {
+    setShowMessage(true);
+    setIsError(isError);
+    setMessage(message);
+    setIsLoading(false);
+    setShowConfirmDeleteDialog(false);
   };
 
-  onMessageCloseClick = () => {
-    this.setState({ showMessage: false });
+  const onMessageCloseClick = () => {
+    setShowMessage(false);
   };
 
-  onCancelConfirmDeleteClick = () => {
-    this.setState({ showConfirmDeleteDialog: false });
+  const onCancelConfirmDeleteClick = () => {
+    setShowConfirmDeleteDialog(false);
   };
 
-  getApiPromise = () => {
-    const { serachQuery } = this.state;
-
+  const getApiPromise = () => {
     if (serachQuery.length === 0) {
       return api.vendor.fetchByPages();
     }
@@ -107,76 +106,54 @@ class Vendors extends Component {
     return api.vendor.searchByIdAndGetByPages(serachQuery);
   };
 
-  render() {
-    const { classes } = this.props;
-    const {
-      clearSearch,
-      message,
-      showMessage,
-      isError,
-      isLoading,
-      showConfirmDeleteDialog
-    } = this.state;
+  return (
+    <Card title="Vendors">
+      <Spin spinning={isLoading}>
+        Loading... Please wait.
+      </Spin>
+      <YesNo
+        open={showConfirmDeleteDialog}
+        message="Are you sure wan't to delete the selected item"
+        onOk={onConfirmDeleteClick}
+        onCancel={onCancelConfirmDeleteClick}
+      />
 
-    return (
-      <Container title="Vendors">
-        <CircularLoader isLoading={isLoading} />
-        <YesNo
-          open={showConfirmDeleteDialog}
-          message="Are you sure wan't to delete the selected item"
-          onOk={this.onConfirmDeleteClick}
-          onCancel={this.onCancelConfirmDeleteClick}
+      <div>
+        <Button type="default" size="small" onClick={onListClick}>
+          List
+        </Button>
+
+        <Button type="default" size="small" onClick={onListClick}>
+          Create New
+        </Button>
+
+        <Searchbox
+          clear={clearSearch}
+          // onChange={() => {}}
+          onSubmit={onSearchSubmit}
         />
+      </div>
 
-        <div>
-          <Button
-            className={classes.button}
-            variant="raised"
-            color="default"
-            size="small"
-            onClick={this.onListClick}
-          >
-            List
-          </Button>
-
-          <Button
-            className={classes.button}
-            variant="raised"
-            color="primary"
-            size="small"
-            onClick={this.onCreateNewClick}
-          >
-            Create New
-          </Button>
-
-          <Searchbox
-            clear={clearSearch}
-            onChange={this.onSearchChange}
-            onSubmit={this.onSearchSubmit}
-          />
-        </div>
-
-        <Message
-          style={{ width: "98%" }}
-          title="Message"
-          message={message}
-          show={showMessage}
-          isError={isError}
-          onCloseClick={this.onMessageCloseClick}
-          autoClose={!isError}
+      {showMessage && (
+        <Alert
+          message="Message"
+          description={message}
+          type={isError ? "error" : "success"}
+          closable
+          onClose={onMessageCloseClick}
         />
-        <div className={classes.wrapper}>
-          <ApiAutoFetchDatagrid
-            datasourcePromise={this.getApiPromise}
-            actions={["del", "edit"]}
-            onEdit={this.onEdit}
-            onDelete={this.onDelete}
-            headers={this.vendorColumns}
-          />
-        </div>
-      </Container>
-    );
-  }
-}
+            )}
+      <div className={classes.wrapper}>
+        <ApiAutoFetchDatagrid
+          datasourcePromise={getApiPromise}
+          actions={["del", "edit"]}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          headers={vendorColumns}
+        />
+      </div>
+    </Card>
+  );
+};
 
-export default withRouter(withStyles(styles, { withTheme: true })(Vendors));
+export default withStyles(styles, { withTheme: true })(Vendors);

@@ -1,6 +1,7 @@
 import React from "react";
-import DeleteIcon from "material-ui-icons/Delete";
-import { IconButton, withStyles } from "material-ui";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { IconButton } from "@mui/material";
+import { withStyles } from "@mui/styles";
 
 const styles = () => ({
   deleteIcon: {

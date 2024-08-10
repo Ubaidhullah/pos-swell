@@ -1,6 +1,6 @@
 import React, { Fragment } from "react";
-import Button from "material-ui/Button";
-import { withStyles } from "material-ui/styles";
+import Button from "@mui/material/Button";
+import { withStyles } from "@mui/styles";
 
 // eslint-disable-next-line
 const styles = theme => ({

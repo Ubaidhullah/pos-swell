@@ -12,7 +12,7 @@ const userLoggedOut = () => ({
 });
 
 export const loginUser = credentials => async dispatch => {
-  console.log(process.env.IS_PROD);
+  console.log(process.env.REACT_APP_IS_PROD);
   const tokens = await api.auth.login(credentials);
   setAuthorizationHeader(tokens.authToken);
   dispatch(userLoggedIn(tokens));

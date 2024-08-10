@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import { withStyles } from "material-ui";
-import AppBar from "material-ui/AppBar";
-import Tabs, { Tab } from "material-ui/Tabs";
+import { withStyles } from "@mui/styles";
+import AppBar from "@mui/material/AppBar";
+import Tab from '@mui/material/Tab';
 
 // eslint-disable-next-line
 const styles = theme => ({
@@ -35,7 +35,7 @@ class CustomTabs extends Component {
 
     return (
       <AppBar position="static" className={classes.tab} color="default">
-        <Tabs
+        <Tab
           classes={{
             indicator: classes.indicator
           }}
@@ -43,7 +43,7 @@ class CustomTabs extends Component {
           onChange={onChange}
         >
           {this.renderTabItems()}
-        </Tabs>
+        </Tab>
       </AppBar>
     );
   }

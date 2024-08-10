@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route } from "react-router";
+import { Routes, Route } from "react-router-dom";
 import customer from "../customers";
 import expense from "../expense";
 import receivings from "../receivings";
@@ -8,66 +8,52 @@ import vendor from "../vendor";
 import sale from "../sale";
 import NotFound from "../notFound/NotFound";
 
-const Routes = () => (
-  <Switch style={{ overflow: "auto" }}>
-    <Route exact path="/" component={() => <div />} />
+const AppRoutes = () => (
+  <div style={{ overflow: "auto" }}>
+    <Routes>
+      <Route path="/" element={<div />} />
 
-    {/* Sale */}
-    <Route exact path="/sale" component={sale} />
+      {/* Sale */}
+      <Route path="/sale" element={<sale />} />
 
-    {/* Receivings */}
-    <Route exact path="/receivings" component={receivings.Receivings} />
-    <Route exact path="/receivings/new" component={receivings.AddNew} />
+      {/* Receivings */}
+      <Route path="/receivings" element={<receivings.Receivings />} />
+      <Route path="/receivings/new" element={<receivings.AddNew />} />
 
-    {/* Vendor */}
-    <Route exact path="/vendors" component={vendor.Vendors} />
-    <Route exact path="/vendors/new" component={vendor.AddNew} />
-    <Route exact path="/vendors/edit/:id" component={vendor.AddNew} />
+      {/* Vendor */}
+      <Route path="/vendors" element={<vendor.Vendors />} />
+      <Route path="/vendors/new" element={<vendor.AddNew />} />
+      <Route path="/vendors/edit/:id" element={<vendor.AddNew />} />
 
-    {/* Customer */}
-    <Route exact path="/customers" component={customer.Customers} />
-    <Route exact path="/customers/new" component={customer.AddNew} />
-    <Route exact path="/customers/edit/:id" component={customer.AddNew} />
+      {/* Customer */}
+      <Route path="/customers" element={<customer.Customers />} />
+      <Route path="/customers/new" element={<customer.AddNew />} />
+      <Route path="/customers/edit/:id" element={<customer.AddNew />} />
 
-    {/* Expense */}
-    <Route exact path="/expense" component={expense.Expense} />
-    <Route exact path="/expense/new" component={expense.AddNewExpense} />
-    <Route exact path="/expense/edit/:id" component={expense.AddNewExpense} />
+      {/* Expense */}
+      <Route path="/expense" element={<expense.Expense />} />
+      <Route path="/expense/new" element={<expense.AddNewExpense />} />
+      <Route path="/expense/edit/:id" element={<expense.AddNewExpense />} />
 
-    {/* Expense Type */}
-    <Route exact path="/expensetypes" component={expense.Expense} />
-    <Route
-      exact
-      path="/expensetypes/new"
-      component={expense.AddNewExpenseType}
-    />
-    <Route
-      exact
-      path="/expensetypes/edit/:id"
-      component={expense.AddNewExpenseType}
-    />
+      {/* Expense Type */}
+      <Route path="/expensetypes" element={<expense.Expense />} />
+      <Route path="/expensetypes/new" element={<expense.AddNewExpenseType />} />
+      <Route path="/expensetypes/edit/:id" element={<expense.AddNewExpenseType />} />
 
-    {/* Product */}
-    <Route exact path="/products" component={product.Products} />
-    <Route exact path="/products/new" component={product.AddNewProduct} />
-    <Route exact path="/products/edit/:id" component={product.AddNewProduct} />
+      {/* Product */}
+      <Route path="/products" element={<product.Products />} />
+      <Route path="/products/new" element={<product.AddNewProduct />} />
+      <Route path="/products/edit/:id" element={<product.AddNewProduct />} />
 
-    {/* Product Type */}
-    <Route exact path="/producttypes" component={product.Products} />
-    <Route
-      exact
-      path="/producttypes/new"
-      component={product.AddNewProductType}
-    />
-    <Route
-      exact
-      path="/producttypes/edit/:id"
-      component={product.AddNewProductType}
-    />
+      {/* Product Type */}
+      <Route path="/producttypes" element={<product.Products />} />
+      <Route path="/producttypes/new" element={<product.AddNewProductType />} />
+      <Route path="/producttypes/edit/:id" element={<product.AddNewProductType />} />
 
-    {/* Catch : Not found */}
-    <Route path="/" component={NotFound} />
-  </Switch>
+      {/* Catch : Not found */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  </div>
 );
 
-export default Routes;
+export default AppRoutes;

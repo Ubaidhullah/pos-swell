@@ -77,7 +77,7 @@ class SearchBox extends Component {
     Object.assign(clone, obj);
 
     clone.qty = 1;
-    clone.price = clone.price;
+    // clone.price = clone.price;
     clone.discount = 0;
     clone.sellingPrice = clone.price;
     clone.totalPrice = clone.price;

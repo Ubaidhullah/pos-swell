@@ -1,7 +1,7 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as equal from "fast-deep-equal";
-import { withRouter } from "react-router";
-import { withStyles } from "material-ui/styles";
+import { useNavigate, useParams } from "react-router-dom";
+import { withStyles } from "@mui/styles";
 import Container from "../controls/Container";
 import Form from "../controls/Form";
 import { isValueExists, isValidEmail } from "../../utils";
@@ -18,8 +18,8 @@ const styles = theme => ({
   }
 });
 
-class AddNew extends Component {
-  initialData = {
+const AddNew = ({ classes }) => {
+  const initialData = {
     id: "",
     name: "",
     address: "",
@@ -28,277 +28,232 @@ class AddNew extends Component {
     email: ""
   };
 
-  state = {
-    data: this.initialData,
-    errors: {},
-    showMessageDialog: false,
-    isLoading: false,
-    message: false,
-    showMessage: false,
-    isError: false,
-    isEdit: false
-  };
+  const [data, setData] = useState(initialData);
+  const [errors, setErrors] = useState({});
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [showMessage, setShowMessage] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
 
-  async componentDidMount() {
-    try {
-      const { id } = this.props.match.params;
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const idRef = useRef(null);
 
-      if (!id) {
-        return;
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+
+      setIsLoading(true);
+
+      try {
+        const res = await api.vendor.fetchById(id);
+        setData(res.data);
+        setIsEdit(true);
+      } catch (error) {
+        displayMessage(error.message, true);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      this.setState({ isLoading: true });
+    fetchData();
+  }, [id]);
 
-      const stateToUpdate = {};
-      const res = await api.vendor.fetchById(id);
-
-      stateToUpdate.data = res.data;
-      stateToUpdate.isLoading = false;
-      stateToUpdate.isEdit = true;
-
-      this.setState({ ...stateToUpdate });
-    } catch (error) {
-      this.showMessage(error.message, true);
-    }
-  }
-
-  onChange = e => {
-    this.setState({
-      data: { ...this.state.data, [e.target.name]: e.target.value },
-      errors: { ...this.state.errors, [e.target.name]: "" }
-    });
+  const onChange = e => {
+    setData({ ...data, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  onMobileInputChange = e => {
+  const onMobileInputChange = e => {
     const mobile = e.target.value;
 
-    this.setState({
-      errors: { ...this.state.errors, mobile: null }
-    });
+    setErrors({ ...errors, mobile: null });
 
     if (mobile.toString().length > 10) {
       return;
     }
     if (mobile.toString() === "") {
-      this.setState({
-        data: {
-          ...this.state.data,
-          mobile: ""
-        }
-      });
+      setData({ ...data, mobile: "" });
     } else if (!isNaN(mobile)) {
-      this.setState({
-        data: {
-          ...this.state.data,
-          mobile
-        }
-      });
+      setData({ ...data, mobile });
     }
   };
 
-  onSubmit = async e => {
+  const onSubmit = async e => {
     e.preventDefault();
 
-    const errors = this.validate();
+    const validationErrors = validate();
 
-    if (Object.keys(errors).length > 0) {
-      this.setState({ errors });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
     try {
-      if (this.state.isEdit === false) {
-        await this.createNew(this.state.data);
+      if (!isEdit) {
+        await createNew(data);
       } else {
-        await this.update(this.state.data);
+        await update(data);
       }
     } catch (error) {
-      this.showError(error);
+      displayMessage(error.message, true);
     }
   };
 
-  createNew = async data => {
+  const createNew = async data => {
     const res = await api.vendor.createNew(data);
 
     if (res.status === 200) {
-      this.showMessage("Saved successfully");
-      this.clearForm();
+      displayMessage("Saved successfully");
+      clearForm();
     } else {
-      throw new Error(
-        `Unable to create the record. The status code is ${res.status}`
-      );
+      throw new Error(`Unable to create the record. The status code is ${res.status}`);
     }
   };
 
-  update = async data => {
-    const res = await api.vendor.update(this.props.match.params.id, data);
+  const update = async data => {
+    const res = await api.vendor.update(id, data);
 
     if (res.status === 200) {
-      this.clearForm(true);
+      clearForm(true);
     } else {
       throw new Error(`Unable to update. The status code is ${res.status}`);
     }
   };
 
-  clearForm = (canShowMessageDialog = false) => {
-    this.setState({
-      data: this.initialData,
-      showMessageDialog: canShowMessageDialog
-    });
+  const clearForm = (canShowMessageDialog = false) => {
+    setData(initialData);
+    setShowMessageDialog(canShowMessageDialog);
 
-    if (this.idRef) {
-      this.idRef.focus();
+    if (idRef.current) {
+      idRef.current.focus();
     }
   };
 
-  onMessageCloseClick = () => {
-    this.setState({
-      showMessage: false,
-      message: "",
-      isError: false
-    });
+  const onMessageCloseClick = () => {
+    setShowMessage(false);
+    setMessage("");
+    setIsError(false);
   };
 
-  showMessage = message => {
-    this.setState({
-      showMessage: true,
-      message,
-      isError: false
-    });
+  const displayMessage = (message, isError = false) => {
+    setShowMessage(true);
+    setMessage(message);
+    setIsError(isError);
+    setIsLoading(false);
   };
 
-  showError = error => {
-    this.setState({
-      showMessage: true,
-      message: error.message,
-      isError: true,
-      isLoading: false
-    });
+  const showError = error => {
+    displayMessage(error.message, true);
   };
 
-  onMessageDialogCloseClick = () => {
-    this.setState({ showMessageDialog: false });
-    this.props.history.goBack();
+  const onMessageDialogCloseClick = () => {
+    setShowMessageDialog(false);
+    navigate(-1);
   };
 
-  validate = () => {
-    let errors = isValueExists(this.state.data);
+  const validate = () => {
+    let validationErrors = isValueExists(data);
 
-    if (this.state.data.mobile.length !== 10) {
-      errors = {
-        ...errors,
-        mobile: "Invalid mobile number."
-      };
+    if (data.mobile.length !== 10) {
+      validationErrors = { ...validationErrors, mobile: "Invalid mobile number." };
     }
 
-    if (!isValidEmail(this.state.data.email)) {
-      errors = {
-        ...errors,
-        email: "Invalid email id."
-      };
+    if (!isValidEmail(data.email)) {
+      validationErrors = { ...validationErrors, email: "Invalid email id." };
     }
 
-    return errors;
+    return validationErrors;
   };
 
-  onCancelClick = () => {
-    const isDirty = !equal(this.initialData, this.state.data);
+  const onCancelClick = () => {
+    const isDirty = !equal(initialData, data);
 
-    if (isDirty === true && this.state.isEdit === false) {
-      this.clearForm();
+    if (isDirty && !isEdit) {
+      clearForm();
       return;
     }
 
-    this.props.history.goBack();
+    navigate(-1);
   };
 
-  render() {
-    const {
-      data,
-      errors,
-      showMessageDialog,
-      isLoading,
-      message,
-      showMessage,
-      isError,
-      isEdit
-    } = this.state;
+  return (
+    <Container title={isEdit ? "Edit Vendor" : "New Vendor"}>
+      <Prompt
+        message="The vendor you entered was saved successfully."
+        open={showMessageDialog}
+        handleClose={onMessageDialogCloseClick}
+      />
+      <CircularLoader isLoading={isLoading} />
+      <Message
+        title="Message"
+        message={message}
+        show={showMessage}
+        isError={isError}
+        onCloseClick={onMessageCloseClick}
+        autoClose={!isError}
+      />
 
-    return (
-      <Container title={isEdit ? "Edit Vendor" : "New Vendor"}>
-        <Prompt
-          message="The vendor you entered was saved successfully."
-          open={showMessageDialog}
-          handleClose={this.onMessageDialogCloseClick}
+      <Form
+        id="vendor"
+        onSubmit={onSubmit}
+        onCancel={onCancelClick}
+      >
+        <CustomTextField
+          inputRef={idRef}
+          error={!!errors.id}
+          name="id"
+          value={data.id}
+          label="Vendor Id"
+          helperText="This should be unique (can give mobile number)"
+          onChange={onChange}
+          disabled={isEdit}
         />
-        <CircularLoader isLoading={isLoading} />
-        <Message
-          title="Message"
-          message={message}
-          show={showMessage}
-          isError={isError}
-          onCloseClick={this.onMessageCloseClick}
-          autoClose={!isError}
+        <br />
+        <CustomTextField
+          error={!!errors.name}
+          name="name"
+          value={data.name}
+          label="Vendor Name"
+          margin="normal"
+          onChange={onChange}
         />
+        <CustomTextField
+          name="description"
+          value={data.description}
+          label="Description"
+          margin="normal"
+          onChange={onChange}
+        />
+        <CustomTextField
+          error={!!errors.address}
+          name="address"
+          value={data.address}
+          label="Address"
+          margin="normal"
+          onChange={onChange}
+        />
+        <CustomTextField
+          error={!!errors.mobile}
+          name="mobile"
+          value={data.mobile}
+          label="Mobile"
+          margin="normal"
+          onChange={onMobileInputChange}
+        />
+        <CustomTextField
+          error={!!errors.email}
+          name="email"
+          value={data.email}
+          label="Email Id"
+          margin="normal"
+          onChange={onChange}
+        />
+      </Form>
+    </Container>
+  );
+};
 
-        <Form
-          id="vendor"
-          onSubmit={this.onSubmit}
-          onCancel={this.onCancelClick}
-        >
-          <CustomTextField
-            error={!!errors.id}
-            name="id"
-            value={data.id}
-            label="Vendor Id"
-            helperText="This should be unique (can give mobile number)"
-            onChange={this.onChange}
-            disabled={isEdit}
-          />
-          <br />
-          <CustomTextField
-            error={!!errors.name}
-            name="name"
-            value={data.name}
-            label="Vendor Name"
-            margin="normal"
-            onChange={this.onChange}
-          />
-          <CustomTextField
-            name="description"
-            value={data.description}
-            label="Description"
-            margin="normal"
-            onChange={this.onChange}
-          />
-          <CustomTextField
-            error={!!errors.address}
-            name="address"
-            value={data.address}
-            label="Address"
-            margin="normal"
-            onChange={this.onChange}
-          />
-          <CustomTextField
-            error={!!errors.mobile}
-            name="mobile"
-            value={data.mobile}
-            label="Mobile"
-            margin="normal"
-            onChange={this.onMobileInputChange}
-          />
-          <CustomTextField
-            error={!!errors.email}
-            name="email"
-            value={data.email}
-            label="Email Id"
-            margin="normal"
-            onChange={this.onChange}
-          />
-        </Form>
-      </Container>
-    );
-  }
-}
-
-export default withRouter(withStyles(styles, { withTheme: true })(AddNew));
+export default withStyles(styles, { withTheme: true })(AddNew);

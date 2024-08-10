@@ -1,25 +1,23 @@
-import React, { Fragment } from "react";
+import React from "react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router";
+import { useLocation } from "react-router-dom";
 import Home from "../home/Home";
 import LoginPage from "../login/LoginPage";
 
-const App = props => {
+const App = ({ isLoggedIn }) => {
+  const location = useLocation();
+
   const checkForAuth = () => {
-    if (props.isLoggedIn) {
-      return <Home />;
-    }
-    return <LoginPage />;
+    return isLoggedIn ? <Home /> : <LoginPage />;
   };
-  return <Fragment>{checkForAuth()}</Fragment>;
+
+  return <React.Fragment>{checkForAuth()}</React.Fragment>;
 };
 
-function mapStateToProps(state) {
-  const isLoggedIn = state.auth !== undefined ? !!state.auth.tokens : false;
-
+const mapStateToProps = state => {
   return {
-    isLoggedIn
+    isLoggedIn: state.auth && state.auth.tokens ? true : false
   };
-}
+};
 
-export default withRouter(connect(mapStateToProps, null)(App));
+export default connect(mapStateToProps)(App);

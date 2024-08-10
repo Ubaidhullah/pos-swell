@@ -1,12 +1,11 @@
 import React from "react";
-import Typography from "material-ui/Typography";
-import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
-import CancelIcon from "@material-ui/icons/Cancel";
-import ArrowDropUpIcon from "@material-ui/icons/ArrowDropUp";
-import ClearIcon from "@material-ui/icons/Clear";
-import Chip from "material-ui/Chip";
+import Typography from "@mui/material/Typography";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import CancelIcon from "@mui/icons-material/Cancel";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import ClearIcon from "@mui/icons-material/Clear";
+import Chip from "@mui/material/Chip";
 import Select from "react-select";
-import "react-select/dist/react-select.css";
 import Option from "./Option";
 
 const SelectWrapped = props => {

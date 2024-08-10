@@ -1,22 +1,20 @@
-import thunk from "redux-thunk";
 import { createStore, applyMiddleware } from "redux";
+import thunk from "redux-thunk";
 import { createLogger } from "redux-logger";
-import reducers from "./reducers";
+import rootReducer from "./reducers";
 
 const persistedState = sessionStorage.getItem("appstate")
   ? JSON.parse(sessionStorage.getItem("appstate"))
   : {};
 
 const configureStore = () => {
-  const middlewares = [];
+  const middlewares = [thunk];
 
-  middlewares.push(thunk);
-
-  if (process.env.REACT_APP_ACC_BOOK !== "production") {
+  if (process.env.REACT_APP_NODE_ENV !== "production") {
     middlewares.push(createLogger());
   }
 
-  return createStore(reducers, persistedState, applyMiddleware(...middlewares));
+  return createStore(rootReducer, persistedState, applyMiddleware(...middlewares));
 };
 
 const store = configureStore();
@@ -26,12 +24,3 @@ store.subscribe(() => {
 });
 
 export default store;
-
-/*
-window.addEventListener('storage',function(e){
-   if(e.storageArea===sessionStorage){
-     alert('change');
-   } 
-   // else, event is caused by an update to localStorage, ignore it
-});
-*/
