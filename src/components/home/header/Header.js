@@ -1,93 +1,41 @@
 import React, { Component, Fragment } from "react";
 import classNames from "classnames";
-import { withStyles } from "@mui/styles";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import Menus from "./Menus";
+import { Layout, Button } from 'antd';
+import { MenuOutlined } from '@ant-design/icons';
+import './Header.css'; // Assuming you create a CSS file for your custom styles
+import Menus from "./UserMenus";
 
+const { Header: AntHeader } = Layout;
 const drawerWidth = 200;
 
-// eslint-disable-next-line
-const styles = theme => ({
-  appBar: {
-    position: "absolute",
-    marginLeft: drawerWidth,
-    [theme.breakpoints.up("md")]: {
-      width: `calc(100% - ${drawerWidth}px)`
-    }
-  },
-  appBarFullWidth: {
-    width: "100%"
-  },
-  flex: {
-    flex: 1
-  },
-  navIconHide: {
-    [theme.breakpoints.up("md")]: {
-      display: "none"
-    }
-  },
-  navIconShow: {
-    display: "block"
-  },
-  logo: {
-    background: "#3f51b5"
-  },
-  logoContainer: {
-    color: "white",
-    "&:only-child > span": {
-      padding: "4px 0px 0px 10px",
-      fontWeight: "lighter"
-    }
-  }
-});
-
 class Header extends Component {
-  state = {};
-
   render() {
-    const { classes, handleDrawerToggle, shouldRenderMobileMenu } = this.props;
+    const { handleDrawerToggle, shouldRenderMobileMenu } = this.props;
 
-    const navIconClass =
-      shouldRenderMobileMenu === true
-        ? classes.navIconShow
-        : classes.navIconHide;
-
-    const appBarClass =
-      shouldRenderMobileMenu === true
-        ? classes.appBarFullWidth
-        : classes.appBar;
+    const navIconClass = shouldRenderMobileMenu ? "navIconShow" : "navIconHide";
+    const appBarClass = shouldRenderMobileMenu ? "appBarFullWidth" : "appBar";
 
     return (
       <Fragment>
-        <AppBar className={appBarClass}>
-          <Toolbar>
-            {/* Collapse button. Clicking this opens the drawer */}
-            <div className={classNames(classes.logo, navIconClass)}>
-              <div className={classes.logoContainer}>
-                <IconButton
-                  style={{ margin: 0 }}
-                  color="inherit"
-                  aria-label="open drawer"
-                  onClick={handleDrawerToggle}
-                >
-                  <MenuIcon />
-                </IconButton>
-                <span>Point Of Sale</span>
-              </div>
+        <AntHeader className={appBarClass}>
+          <div className={classNames("logo", navIconClass)}>
+            <div className="logoContainer">
+              <Button
+                style={{ margin: 0 }}
+                icon={<MenuOutlined />}
+                type="text"
+                onClick={handleDrawerToggle}
+              />
+              <span>Point Of Sale</span>
             </div>
-
-            {/* This is the right side menu - Logout, My Profile */}
-            <div className={classes.flex}>
-              <Menus />
-            </div>
-          </Toolbar>
-        </AppBar>
+          </div>
+          <div className="flex">
+            <Menus />
+          </div>
+        </AntHeader>
       </Fragment>
     );
   }
 }
 
-export default withStyles(styles, { withTheme: true })(Header);
+export default Header;

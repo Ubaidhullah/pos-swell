@@ -1,0 +1,39 @@
+.appBar {
+    position: absolute;
+    margin-left: 200px; /* drawerWidth */
+    width: calc(100% - 200px);
+  }
+  
+  .appBarFullWidth {
+    width: 100%;
+  }
+  
+  .flex {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .navIconHide {
+    display: none;
+  }
+  
+  .navIconShow {
+    display: block;
+  }
+  
+  .logo {
+    background: #72bacf;
+  }
+  
+  .logoContainer {
+    color: white;
+    display: flex;
+    align-items: center;
+  }
+  
+  .logoContainer > span {
+    padding: 4px 0px 0px 10px;
+    font-weight: lighter;
+  }
+  

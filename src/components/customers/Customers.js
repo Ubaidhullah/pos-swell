@@ -1,13 +1,10 @@
 import React, { useState } from "react";
-import { Button } from 'antd';
-import { Card } from 'antd';
-import { Spin } from 'antd';
+import { Button, Card, Spin, Alert } from 'antd'; // Consolidated imports from antd
 import { useNavigate } from "react-router-dom";
 import { withStyles } from "@mui/styles";
 import Container from "../controls/Container";
 import Searchbox from "../controls/Searchbox";
 import Message from "../controls/Message";
-import { Alert } from 'antd';
 import ApiAutoFetchDatagrid from "../controls/datagrid/ApiAutoFetchDatagrid";
 import api from "../../api";
 import CircularLoader from "../controls/loader/CircularLoader";
@@ -32,7 +29,7 @@ const styles = theme => ({
 const Customers = ({ classes }) => {
   const customerColumns = ["Id", "Name", "Description", "Address", "Mobile", "Email"];
   const [clearSearch, setClearSearch] = useState(false);
-  const [serachQuery, setSerachQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [message, setMessage] = useState("");
   const [showMessage, setShowMessage] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -43,17 +40,17 @@ const Customers = ({ classes }) => {
 
   const onListClick = () => {
     setClearSearch(true);
-    setSerachQuery("");
+    setSearchQuery("");
     setShowMessage(false);
   };
 
   const onSearchChange = (event) => {
-    setSerachQuery(event.target.value);
+    setSearchQuery(event.target.value);
   };
 
   const onSearchSubmit = async id => {
     setClearSearch(false);
-    setSerachQuery(id);
+    setSearchQuery(id);
   };
 
   const onCreateNewClick = () => {
@@ -104,11 +101,11 @@ const Customers = ({ classes }) => {
   };
 
   const getApiPromise = () => {
-    if (serachQuery.length === 0) {
+    if (searchQuery.length === 0) {
       return api.customer.fetchByPages();
     }
 
-    return api.customer.searchByIdAndGetByPages(serachQuery);
+    return api.customer.searchByIdAndGetByPages(searchQuery);
   };
 
   return (
@@ -116,17 +113,17 @@ const Customers = ({ classes }) => {
       <CircularLoader isLoading={isLoading} />
       <YesNo
         open={showConfirmDeleteDialog}
-        message="Are you sure wan't to delete the selected item"
+        message="Are you sure you want to delete the selected item?"
         onOk={onConfirmDeleteClick}
         onCancel={onCancelConfirmDeleteClick}
       />
 
       <div>
-      <Button type="default" size="small" onClick={onListClick}>
+        <Button type="default" size="small" onClick={onListClick}>
           List
         </Button>
 
-        <Button type="default" size="small" onClick={onListClick}>
+        <Button type="default" size="small" onClick={onCreateNewClick}>
           Create New
         </Button>
 
@@ -137,15 +134,17 @@ const Customers = ({ classes }) => {
         />
       </div>
 
-      <Message
-        style={{ width: "98%" }}
-        title="Message"
-        message={message}
-        show={showMessage}
-        isError={isError}
-        onCloseClick={onMessageCloseClick}
-        autoClose={!isError}
-      />
+      {showMessage && (
+        <Message
+          style={{ width: "98%" }}
+          title="Message"
+          message={message}
+          show={showMessage}
+          isError={isError}
+          onCloseClick={onMessageCloseClick}
+          autoClose={!isError}
+        />
+      )}
       <div className={classes.wrapper}>
         <ApiAutoFetchDatagrid
           datasourcePromise={getApiPromise}

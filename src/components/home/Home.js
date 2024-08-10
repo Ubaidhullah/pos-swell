@@ -9,7 +9,6 @@ const { Content } = Layout;
 
 const Home = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
 
   const handleDrawerToggle = () => {
@@ -19,7 +18,8 @@ const Home = () => {
   const shouldRenderMobileMenu = location.pathname === "/sale";
 
   return (
-    <Layout style={{ height: "100vh" }}>
+    <Layout style={{ minHeight: "100vh" }}>
+      {/* Header and Sidebar */}
       <Header
         shouldRenderMobileMenu={shouldRenderMobileMenu}
         handleDrawerToggle={handleDrawerToggle}
@@ -29,9 +29,12 @@ const Home = () => {
           mobileOpen={mobileOpen}
           handleDrawerToggle={handleDrawerToggle}
         />
-        <Content style={{ margin: "24px 16px", padding: 24, background: "#fff" }}>
-          <Routes />
-        </Content>
+        {/* Main Content Area */}
+        <Layout style={{ padding: "24px" }}>
+          <Content style={{ margin: "24px 16px", padding: 24, background: "#fff", overflow: "auto" }}>
+            <Routes />
+          </Content>
+        </Layout>
       </Layout>
     </Layout>
   );
