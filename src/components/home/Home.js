@@ -19,23 +19,13 @@ const Home = () => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      {/* Header and Sidebar */}
-      <Header
-        shouldRenderMobileMenu={shouldRenderMobileMenu}
-        handleDrawerToggle={handleDrawerToggle}
-      />
-      <Layout>
-        <Sidebar
-          mobileOpen={mobileOpen}
-          handleDrawerToggle={handleDrawerToggle}
-        />
+     
+        <Sidebar>
         {/* Main Content Area */}
-        <Layout style={{ padding: "24px" }}>
           <Content style={{ margin: "24px 16px", padding: 24, background: "#fff", overflow: "auto" }}>
             <Routes />
           </Content>
-        </Layout>
-      </Layout>
+        </Sidebar>
     </Layout>
   );
 };

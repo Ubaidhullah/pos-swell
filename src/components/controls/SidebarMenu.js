@@ -1,14 +1,6 @@
 import React from "react";
 import { Menu } from "antd";
-import {
-  AppstoreOutlined,
-  UserAddOutlined,
-  TeamOutlined,
-  DollarOutlined,
-  FileAddOutlined,
-  BarChartOutlined,
-  ShoppingOutlined,
-} from "@ant-design/icons";
+
 
 const SidebarMenu = ({ isSelected, onClick, text, icon }) => {
   return (

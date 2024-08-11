@@ -104,6 +104,13 @@ class CartTable extends Component {
           onChange={this.onChange}
         />
 
+        <CartHeader onDeleteAllClick={this.onDeleteAllClick} />
+        <CartBody
+          cartArray={cartArray}
+          onDeleteCartItemClick={this.onDeleteCartItemClick}
+          onProductItemClick={this.onProductItemClick}
+        />
+
         <Table
           columns={columns}
           dataSource={cartArray}

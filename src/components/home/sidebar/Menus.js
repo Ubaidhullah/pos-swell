@@ -33,7 +33,7 @@ const Menus = () => {
           text="Sale"
           icon={<AppstoreOutlined />}
         />
-        <Menu.SubMenu key="master" title="MASTER">
+        
           <SidebarMenu
             isSelected={isSelected("customers")}
             onClick={() => onMenuClick("/customers")}
@@ -64,12 +64,10 @@ const Menus = () => {
             text="Receivings"
             icon={<FileAddOutlined />}
           />
-        </Menu.SubMenu>
-        <Menu.SubMenu key="reports" title="REPORTS">
           <SidebarMenu text="Todays Sales" icon={<BarChartOutlined />} />
           <SidebarMenu text="Credit Sale" icon={<ShoppingOutlined />} />
           <SidebarMenu text="Expense" icon={<DollarOutlined />} />
-        </Menu.SubMenu>
+       
       </Menu>
     </Fragment>
   );

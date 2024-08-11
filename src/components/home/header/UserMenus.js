@@ -44,7 +44,12 @@ class UserMenu extends Component {
           onVisibleChange={this.handleVisibleChange}
           visible={this.state.visible}
         >
-          <Button type="text" icon={<UserOutlined />} />
+          <Button style={{
+              fontSize: "16px",
+              color: "#fff", // Match the text color to the dark theme
+            }}
+             type="text" 
+             icon={<UserOutlined />} />
         </Dropdown>
       </Fragment>
     );
