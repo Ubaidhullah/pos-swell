@@ -1,46 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as equal from "fast-deep-equal";
+import { Form, Input, Button, Select, DatePicker, message, Spin } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
-import { withStyles } from "@mui/styles";
-import Container from "../controls/Container";
-import Form from "../controls/Form";
-import CustomTextField from "../controls/textfields/CustomTextField";
-import Dropdown from "../controls/dropdown/Dropdown";
-import CircularLoader from "../controls/loader/CircularLoader";
 import api from "../../api";
-import NumberTextField from "../controls/textfields/NumberTextField";
-import { isValueExists } from "../../utils";
-import Message from "../controls/Message";
-import Prompt from "../controls/dialog/Prompt";
-// import CustomDatePicker from "../controls/pickers/CustomDatePicker";
+import moment from "moment";
 
-// eslint-disable-next-line
-const styles = theme => ({
-  form: {
-    marginLeft: 20
-  },
-  wrapper: {
-    position: "relative"
-  }
-});
+const { Option } = Select;
 
-const AddNewExpense = ({ classes }) => {
+const AddNewExpense = () => {
   const initialData = {
     expenseTypeId: "",
     description: "",
     amount: "",
-    spentAt: ""
+    spentAt: moment(),
   };
 
   const [data, setData] = useState(initialData);
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
   const [expenseTypeIds, setExpenseTypeIds] = useState([]);
-  const [showMessage, setShowMessage] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [showMessageDialog, setShowMessageDialog] = useState(false);
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -52,191 +29,96 @@ const AddNewExpense = ({ classes }) => {
 
       try {
         const res = await api.expenseType.fetchAll();
-        const expenseTypeIds = res.data.map(d => ({
-          value: d.id,
-          label: d.id
-        }));
-
-        setExpenseTypeIds(expenseTypeIds);
-        setIsLoading(false);
+        setExpenseTypeIds(res.data);
 
         if (id) {
           const res2 = await api.expense.fetchById(id);
-          const expenseToEdit = res2.data;
-          setData(expenseToEdit);
+          setData({ ...res2.data, spentAt: moment(res2.data.spentAt) });
           setIsEdit(true);
         }
       } catch (error) {
-        showError(error);
+        message.error(error.message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
   }, [id]);
 
-  const onChange = e => {
-    setData({ ...data, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
-  };
-
-  const onExpenseTypeDropdownChange = value => {
-    const expenseTypeId = value === null ? "" : value;
-
-    setData({ ...data, expenseTypeId });
-    setErrors({ ...errors, expenseTypeId: "" });
-  };
-
-  const onCancelClick = () => {
-    const isDirty = !equal(initialData, data);
-
-    if (isDirty && !isEdit) {
-      clearForm();
-      return;
-    }
-
-    navigate(-1);
-  };
-
-  const onSubmit = async e => {
-    e.preventDefault();
-
-    const validationErrors = isValueExists(data);
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
+  const onSubmit = async (values) => {
     try {
-      data.amount = Number(data.amount);
-
-      if (!isEdit) {
-        await createNew(data);
+      setIsLoading(true);
+      if (isEdit) {
+        await api.expense.update(id, values);
       } else {
-        await update(data);
+        await api.expense.createNew(values);
       }
+      message.success("Saved successfully");
+      navigate(-1);
     } catch (error) {
-      showError(error);
+      message.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const createNew = async data => {
-    const res = await api.expense.createNew(data);
-
-    if (res.status === 200) {
-      showMessageHandler("Saved successfully");
-      clearForm();
-    } else {
-      throw new Error(
-        `Unable to create the record. The status code is ${res.status}`
-      );
-    }
-  };
-
-  const update = async data => {
-    const res = await api.expense.update(id, data);
-
-    if (res.status === 200) {
-      clearForm(true);
-    } else {
-      throw new Error(`Unable to update. The status code is ${res.status}`);
-    }
-  };
-
-  const clearForm = (canShowMessageDialog = false) => {
-    setData(initialData);
-    setShowMessageDialog(canShowMessageDialog);
-
-    if (idRef.current) {
-      idRef.current.focus();
-    }
-  };
-
-  const onMessageCloseClick = () => {
-    setShowMessage(false);
-    setMessage("");
-    setIsError(false);
-  };
-
-  const showMessageHandler = message => {
-    setShowMessage(true);
-    setMessage(message);
-    setIsError(false);
-  };
-
-  const showError = error => {
-    setShowMessage(true);
-    setMessage(error.message);
-    setIsError(true);
-    setIsLoading(false);
-  };
-
-  const onMessageDialogCloseClick = () => {
-    setShowMessageDialog(false);
-    navigate(-1);
-  };
-
-  const handleDateChange = date => {
-    setData({ ...data, spentAt: date });
-    setErrors({ ...errors, spentAt: "" });
   };
 
   return (
-    <Container title={isEdit ? "Edit Expense" : "New Expense"}>
-      <Prompt
-        message="The expense you entered was saved successfully."
-        open={showMessageDialog}
-        handleClose={onMessageDialogCloseClick}
-      />
-      <CircularLoader isLoading={isLoading} />
-      <Message
-        title="Message"
-        message={message}
-        show={showMessage}
-        isError={isError}
-        onCloseClick={onMessageCloseClick}
-        autoClose={!isError}
-      />
-
-      <Form id="expense" onSubmit={onSubmit} onCancel={onCancelClick}>
-        <CustomTextField
-          inputRef={idRef}
-          error={!!errors.description}
+    <Spin spinning={isLoading}>
+      <Form
+        layout="vertical"
+        initialValues={data}
+        onFinish={onSubmit}
+      >
+        <Form.Item
           name="description"
-          value={data.description}
           label="Expense description"
-          onChange={onChange}
-        />
+          rules={[{ required: true, message: "Please enter a description" }]}
+        >
+          <Input ref={idRef} />
+        </Form.Item>
 
-        <Dropdown
-          name="expenseType"
-          value={data.expenseTypeId}
-          error={!!errors.expenseType}
-          datasource={expenseTypeIds}
-          onChange={onExpenseTypeDropdownChange}
-          placeholder=""
+        <Form.Item
+          name="expenseTypeId"
           label="Expense type"
-        />
+          rules={[{ required: true, message: "Please select an expense type" }]}
+        >
+          <Select>
+            {expenseTypeIds.map((type) => (
+              <Option key={type.id} value={type.id}>
+                {type.id}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
 
-        <NumberTextField
-          error={!!errors.amount}
+        <Form.Item
           name="amount"
-          value={data.amount}
           label="Amount"
-          onChange={onChange}
-        />
+          rules={[{ required: true, message: "Please enter an amount" }]}
+        >
+          <Input type="number" />
+        </Form.Item>
 
-        {/* <CustomDatePicker
-          error={!!errors.spentAt}
+        <Form.Item
           name="spentAt"
           label="Spent At"
-          value={data.spentAt}
-          showTodayButton={true}
-          handleDateChange={handleDateChange}
-        /> */}
+          rules={[{ required: true, message: "Please select a date" }]}
+        >
+          <DatePicker />
+        </Form.Item>
+
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            {isEdit ? "Update" : "Create"}
+          </Button>
+          <Button onClick={() => navigate(-1)} style={{ marginLeft: 8 }}>
+            Cancel
+          </Button>
+        </Form.Item>
       </Form>
-    </Container>
+    </Spin>
   );
 };
 
-export default withStyles(styles, { withTheme: true })(AddNewExpense);
+export default AddNewExpense;

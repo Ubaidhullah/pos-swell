@@ -1,32 +1,56 @@
 import React from "react";
-import { TableBody, TableRow } from "@mui/material";
-import CustomTableCell from "../controls/CustomTableCell";
-import LightButton from "../controls/LightButton";
-import DeleteButton from "../controls/DeleteButton";
-import CartBodyNoItems from "./CartBodyNoItems";
+import { Table } from "antd";
+import { Button } from "antd";
 
 const CartBody = ({ cartArray, onDeleteCartItem, onProductItemSelect }) => {
   if (cartArray.length === 0) {
-    return <CartBodyNoItems />;
+    return (
+      <Table dataSource={[]} pagination={false} locale={{ emptyText: "No items in the cart" }} />
+    );
   }
 
-  return (
-    <TableBody>
-      {cartArray.map(n => (
-        <TableRow key={n.id}>
-          <CustomTableCell style={{ width: 150 }}>
-            <LightButton text={n.name} onClick={() => onProductItemSelect(n)} />
-          </CustomTableCell>
-          <CustomTableCell numeric>{n.sellingPrice}</CustomTableCell>
-          <CustomTableCell numeric>{n.qty}</CustomTableCell>
-          <CustomTableCell numeric>{n.totalPrice}</CustomTableCell>
-          <CustomTableCell numeric style={{ width: 30, paddingRight: "5px" }}>
-            <DeleteButton onDelete={() => onDeleteCartItem(n)} />
-          </CustomTableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  );
+  const columns = [
+    {
+      title: "Product",
+      dataIndex: "name",
+      key: "name",
+      render: (text, record) => (
+        <Button type="link" onClick={() => onProductItemSelect(record)}>
+          {text}
+        </Button>
+      ),
+    },
+    {
+      title: "Price",
+      dataIndex: "sellingPrice",
+      key: "sellingPrice",
+      align: "right",
+    },
+    {
+      title: "Qty",
+      dataIndex: "qty",
+      key: "qty",
+      align: "right",
+    },
+    {
+      title: "Total",
+      dataIndex: "totalPrice",
+      key: "totalPrice",
+      align: "right",
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      align: "right",
+      render: (text, record) => (
+        <Button danger onClick={() => onDeleteCartItem(record)}>
+          Delete
+        </Button>
+      ),
+    },
+  ];
+
+  return <Table dataSource={cartArray} columns={columns} rowKey="id" pagination={false} />;
 };
 
 export default CartBody;

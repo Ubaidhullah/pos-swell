@@ -1,65 +1,83 @@
 import React, { useState } from "react";
-import * as moment from "moment";
-import Button from "@mui/material/Button";
+import { Button, Input, Table, Modal, Spin, Alert } from "antd";
 import { useNavigate } from "react-router-dom";
-import { withStyles } from "@mui/styles";
-import Searchbox from "../controls/Searchbox";
 import api from "../../api";
-import ApiAutoFetchDatagrid from "../controls/datagrid/ApiAutoFetchDatagrid";
-import YesNo from "../controls/dialog/YesNo";
-import CircularLoader from "../controls/loader/CircularLoader";
-import Message from "../controls/Message";
+import moment from "moment";
 
-const styles = theme => ({
-  leftIcon: {
-    marginRight: theme.spacing.unit
-  },
-  button: {
-    margin: theme.spacing.unit
-  },
-  iconSmall: {
-    fontSize: 20
-  },
-  wrapper: {
-    marginTop: 20,
-    position: "relative"
-  }
-});
-
-const ExpenseTab = ({ classes }) => {
-  const expenseColumns = ["ID", "Description", "Amount", "Spent At", "Type"];
+const ExpenseTab = () => {
+  const expenseColumns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+    },
+    {
+      title: "Spent At",
+      dataIndex: "spentAt",
+      key: "spentAt",
+      render: (text) => moment(text).format("DD-MM-YYYY"),
+    },
+    {
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (text, record) => (
+        <>
+          <Button onClick={() => onEdit(record)}>Edit</Button>
+          <Button danger onClick={() => onDelete(record)}>Delete</Button>
+        </>
+      ),
+    },
+  ];
 
   const [clearSearch, setClearSearch] = useState(false);
-  const [serachQuery, setSerachQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showMessage, setShowMessage] = useState(false);
   const [isError, setIsError] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [dataSource, setDataSource] = useState([]);
 
   const navigate = useNavigate();
 
   const onListClick = () => {
     setClearSearch(true);
-    setSerachQuery("");
+    setSearchQuery("");
     setShowMessage(false);
   };
 
-  const onSearchSubmit = async id => {
+  const onSearchSubmit = async (value) => {
     setClearSearch(false);
-    setSerachQuery(id);
+    setSearchQuery(value);
+    const data = await getApiPromise();
+    setDataSource(data);
   };
 
   const onCreateNewClick = () => {
-    navigate("expense/new");
+    navigate("/expense/new");
   };
 
-  const onEdit = row => {
-    navigate(`expense/edit/${row.id}`);
+  const onEdit = (row) => {
+    navigate(`/expense/edit/${row.id}`);
   };
 
-  const onDelete = itemToDelete => {
+  const onDelete = (itemToDelete) => {
     setShowConfirmDeleteDialog(true);
     setItemToDelete(itemToDelete);
   };
@@ -90,81 +108,38 @@ const ExpenseTab = ({ classes }) => {
     setShowConfirmDeleteDialog(false);
   };
 
-  const onMessageCloseClick = () => {
-    setShowMessage(false);
-  };
-
-  const onCancelConfirmDeleteClick = () => {
-    setShowConfirmDeleteDialog(false);
-  };
-
   const getApiPromise = () => {
-    if (serachQuery.length === 0) {
+    if (searchQuery.length === 0) {
       return api.expense.fetchByPages();
     }
 
-    return api.expense.searchByIdAndGetByPages(serachQuery);
+    return api.expense.searchByIdAndGetByPages(searchQuery);
   };
 
   return (
-    <div className={classes.wrapper}>
-      <CircularLoader isLoading={isLoading} />
-      <YesNo
-        open={showConfirmDeleteDialog}
-        message="Are you sure wan't to delete the selected item"
+    <div>
+      {isLoading && <Spin />}
+      {showMessage && <Alert message={message} type={isError ? "error" : "success"} closable />}
+      <div style={{ marginBottom: 16 }}>
+        <Button onClick={onListClick}>List</Button>
+        <Button type="primary" onClick={onCreateNewClick}>Create New</Button>
+        <Input.Search
+          placeholder="Search by ID"
+          onSearch={onSearchSubmit}
+          style={{ width: 200, marginLeft: 16 }}
+        />
+      </div>
+      <Table columns={expenseColumns} dataSource={dataSource} rowKey="id" />
+      <Modal
+        title="Confirm Deletion"
+        visible={showConfirmDeleteDialog}
         onOk={onConfirmDeleteClick}
-        onCancel={onCancelConfirmDeleteClick}
-      />
-      <div>
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="default"
-          size="small"
-          onClick={onListClick}
-        >
-          List
-        </Button>
-
-        <Button
-          className={classes.button}
-          variant="contained"
-          color="primary"
-          size="small"
-          onClick={onCreateNewClick}
-        >
-          Create New
-        </Button>
-        <Searchbox
-          clear={clearSearch}
-          onSubmit={onSearchSubmit}
-        />
-      </div>
-
-      <Message
-        style={{ width: "98%" }}
-        title="Message"
-        message={message}
-        show={showMessage}
-        isError={isError}
-        onCloseClick={onMessageCloseClick}
-        autoClose={!isError}
-      />
-
-      <div className={classes.wrapper}>
-        <ApiAutoFetchDatagrid
-          datasourcePromise={getApiPromise}
-          actions={["del", "edit"]}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          headers={expenseColumns}
-          transformers={{
-            spentAt: value => moment(value).format("DD-MM-YYYY")
-          }}
-        />
-      </div>
+        onCancel={() => setShowConfirmDeleteDialog(false)}
+      >
+        Are you sure you want to delete the selected item?
+      </Modal>
     </div>
   );
 };
 
-export default withStyles(styles, { withTheme: true })(ExpenseTab);
+export default ExpenseTab;

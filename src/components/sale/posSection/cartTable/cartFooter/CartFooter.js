@@ -1,33 +1,34 @@
-import React, { Component } from "react";
-import { Table, TableBody } from "@mui/material";
-import TotalRow from "./TotalRow";
-import TaxDiscountRow from "./TaxDiscountRow";
-import TotalBillRow from "./TotalBillRow";
+import React, { useState } from "react";
+import { Button } from "antd";
+import NormalSale from "../../sale/NormalSale";
 
-class CartFooter extends Component {
-  state = {};
+const Footer = ({ summary }) => {
+  const [showNormalPopup, setShowNormalPopup] = useState(false);
 
-  render() {
-    const { cartArray, summary } = this.props;
+  const normalSaleClick = () => setShowNormalPopup(true);
+  const handleNormalSaleClose = () => setShowNormalPopup(false);
 
-    if (summary.noOfItems === 0) {
-      return null;
-    }
-
-    const totalQtyText = `${summary.noOfItems} (${summary.noOfInividualItems})`;
-    const totalPrice = summary.total;
-    const { netTotal } = summary;
-
-    return (
-      <Table style={{ marginTop: "50px" }}>
-        <TableBody>
-          <TotalRow totalQtyText={totalQtyText} totalPrice={totalPrice} />
-          <TaxDiscountRow cartArray={cartArray} summary={summary} />
-          <TotalBillRow netTotal={netTotal} />
-        </TableBody>
-      </Table>
-    );
+  if (summary.noOfItems === 0) {
+    return null;
   }
-}
 
-export default CartFooter;
+  return (
+    <div style={{ marginTop: 20 }}>
+      {showNormalPopup && (
+        <NormalSale
+          visible={showNormalPopup}
+          handleClose={handleNormalSaleClose}
+        />
+      )}
+      <Button type="default" block onClick={normalSaleClick}>
+        Normal Sale
+      </Button>
+
+      <Button type="default" block onClick={() => { /* Implement credit sale */ }}>
+        Credit Sale
+      </Button>
+    </div>
+  );
+};
+
+export default Footer;
