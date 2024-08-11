@@ -1,49 +1,41 @@
 import React, { Component } from "react";
-import { Paper, Avatar } from "@mui/material";
-import { withStyles } from "@mui/styles";
-
-const styles = () => ({
-  purpleAvatar: {
-    color: "#fff",
-    backgroundColor: "#3f50b5"
-  }
-});
+import { Card, Avatar } from "antd";
 
 class GridItem extends Component {
-  state = {};
-
   render() {
-    const { classes } = this.props;
-
     return (
-      <Paper
+      <Card
         style={{
           width: 150,
           height: 150,
           overflow: "auto",
-          display: "inline-block"
+          display: "inline-block",
+          textAlign: "center"
         }}
       >
-        <div style={{ paddingTop: 30 }}>
-          <Avatar style={{ margin: "auto" }} className={classes.purpleAvatar}>
-            BR
-          </Avatar>
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <p
-            style={{
-              width: 130,
-              overflowWrap: "break-word",
-              padding: 5,
-              fontSize: "13px"
-            }}
-          >
-            Britania Tiger
-          </p>
-        </div>
-      </Paper>
+        <Avatar
+          style={{
+            margin: "auto",
+            backgroundColor: "#3f50b5",
+            color: "#fff"
+          }}
+        >
+          BR
+        </Avatar>
+        <p
+          style={{
+            width: 130,
+            overflowWrap: "break-word",
+            padding: 5,
+            fontSize: "13px",
+            marginTop: 30,
+          }}
+        >
+          Britania Tiger
+        </p>
+      </Card>
     );
   }
 }
 
-export default withStyles(styles, { withTheme: true })(GridItem);
+export default GridItem;

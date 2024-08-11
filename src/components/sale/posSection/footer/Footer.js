@@ -1,18 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import {  Button } from "@mui/material";
-import { withStyles } from "@mui/styles";
+import { Button } from "antd";
 import NormalSale from "../sale/NormalSale";
-
-const styles = () => ({
-  root: {
-    marginTop: "20px"
-  },
-  button: {
-    marginBottom: "1px",
-    boxShadow: "none"
-  }
-});
 
 class Footer extends Component {
   state = {
@@ -29,35 +18,31 @@ class Footer extends Component {
 
   render() {
     const { showNormalPopup } = this.state;
-    const { classes, summary } = this.props;
+    const { summary } = this.props;
 
     if (summary.noOfItems === 0) {
       return null;
     }
 
     return (
-      <div className={classes.root}>
+      <div style={{ marginTop: 20 }}>
         {showNormalPopup && (
           <NormalSale
-            open={showNormalPopup}
+            visible={showNormalPopup}
             handleClose={this.handleNormalSaleClose}
           />
         )}
         <Button
-          className={classes.button}
-          variant="raised"
-          color="default"
-          fullWidth
+          type="default"
+          block
           onClick={this.normalSaleClick}
         >
           Normal Sale
         </Button>
 
         <Button
-          className={classes.button}
-          variant="raised"
-          color="default"
-          fullWidth
+          type="default"
+          block
           onClick={this.creditSaleClick}
         >
           Credit Sale
@@ -67,11 +52,8 @@ class Footer extends Component {
   }
 }
 
-function mapStateToProps({ cart }) {
-  return {
-    summary: cart.summary
-  };
-}
+const mapStateToProps = ({ cart }) => ({
+  summary: cart.summary
+});
 
-const component = withStyles(styles)(Footer);
-export default connect(mapStateToProps)(component);
+export default connect(mapStateToProps)(Footer);

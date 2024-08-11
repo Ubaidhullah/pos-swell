@@ -1,22 +1,18 @@
 import React, { Component } from "react";
-import { withStyles } from "@mui/styles";
-import styles from "./styles";
 import PosSection from "./posSection/PosSection";
 import GridItem from "./displaySection/GridItem";
 
 class Sale extends Component {
   render() {
-    const { classes } = this.props;
-
     return (
-      <div className={classes.flexContainer}>
+      <div style={{ display: 'flex' }}>
         {/* Left side carts grid and barcode/search text box  */}
-        <div className={classes.pos}>
+        <div style={{ flex: 1 }}>
           <PosSection />
         </div>
 
         {/* Right side products display grid */}
-        <div className={classes.items}>
+        <div style={{ flex: 1 }}>
           <GridItem />
         </div>
       </div>
@@ -24,4 +20,4 @@ class Sale extends Component {
   }
 }
 
-export default withStyles(styles, { withTheme: true })(Sale);
+export default Sale;

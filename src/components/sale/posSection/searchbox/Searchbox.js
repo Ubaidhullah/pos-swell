@@ -1,9 +1,8 @@
 import React, { Component, Fragment } from "react";
 import { connect } from "react-redux";
-import Message from "../../../controls/Message";
+import { Alert, AutoComplete } from "antd";
 import api from "../../../../api";
 import { sleep } from "../../../../utils";
-import AutoSuggestWithApiDatasource from "../../../controls/autoSuggest/AutoSuggestWithApiDatasource";
 import { addItemToCart, updateCartItem } from "../../../../actions/cart";
 
 class SearchBox extends Component {
@@ -13,8 +12,8 @@ class SearchBox extends Component {
     products: []
   };
 
-  onChange = async e => {
-    const searchText = e.target.value;
+  onChange = async value => {
+    const searchText = value;
 
     if (!searchText || searchText.length < 3) {
       this.setState({ products: [], searchText });
@@ -33,8 +32,6 @@ class SearchBox extends Component {
         this.setState({ products: res.data });
       }
     } catch (error) {
-      console.log(error);
-
       this.setState({ showMessage: true });
     }
   };
@@ -66,33 +63,24 @@ class SearchBox extends Component {
   };
 
   constructCartObjForUpdate = obj => {
-    const clone = {};
-    Object.assign(clone, obj);
-    clone.qty += 1;
-    return clone;
+    return {
+      ...obj,
+      qty: obj.qty + 1
+    };
   };
 
   constructCartObjForAddNew = obj => {
-    const clone = {};
-    Object.assign(clone, obj);
-
-    clone.qty = 1;
-    // clone.price = clone.price;
-    clone.discount = 0;
-    clone.sellingPrice = clone.price;
-    clone.totalPrice = clone.price;
-
-    return clone;
+    return {
+      ...obj,
+      qty: 1,
+      discount: 0,
+      sellingPrice: obj.price,
+      totalPrice: obj.price
+    };
   };
 
   onMessageCloseClick = () => {
     this.setState({ showMessage: false });
-  };
-
-  handleKeyDown = event => {
-    if (event.key === "F11") {
-      console.log(event.key);
-    }
   };
 
   render() {
@@ -100,22 +88,21 @@ class SearchBox extends Component {
 
     return (
       <Fragment>
-        <Message
-          style={{ width: 430 }}
-          title="Message"
-          message="Something went wrong. Please try again later"
-          show={showMessage}
-          isError={true}
-          onCloseClick={this.onMessageCloseClick}
-        />
-        <AutoSuggestWithApiDatasource
-          searchText={searchText}
-          width="450px"
-          onKeyDown={this.handleKeyDown}
-          onLeave={this.onLeave}
-          onChange={this.onChange}
-          onSelected={this.onSelected}
-          datasource={products}
+        {showMessage && (
+          <Alert
+            message="Something went wrong. Please try again later"
+            type="error"
+            closable
+            afterClose={this.onMessageCloseClick}
+          />
+        )}
+        <AutoComplete
+          value={searchText}
+          options={products.map(product => ({ value: product.name }))}
+          style={{ width: 450 }}
+          onSelect={this.onSelected}
+          onSearch={this.onChange}
+          placeholder="Search products"
         />
       </Fragment>
     );
@@ -126,7 +113,4 @@ const mapStateToProps = ({ cart }) => ({
   cart: cart.items
 });
 
-export default connect(
-  mapStateToProps,
-  { updateCartItem, addItemToCart }
-)(SearchBox);
+export default connect(mapStateToProps, { updateCartItem, addItemToCart })(SearchBox);

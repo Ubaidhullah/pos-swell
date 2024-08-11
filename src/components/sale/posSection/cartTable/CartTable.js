@@ -1,67 +1,50 @@
 import React, { Component } from "react";
 import currency from "currency.js";
 import { connect } from "react-redux";
-import { withStyles } from "@mui/styles";
-import { Paper } from "@mui/material";
-import Table from "@mui/material/Table";
-import YesNo from "../../../controls/dialog/YesNo";
+import { Table, Modal, Button } from "antd";
+import * as cartActions from "../../../../actions/cart";
+import { getCartItemsArraySelector } from "../../../../selectors";
 import EditCartItem from "../editCartItem/EditCartItem";
 import CartHeader from "./cartHeader";
 import CartBody from "./cartBody";
 import CartFooter from "./cartFooter";
-import * as cartActions from "../../../../actions/cart";
-import { getCartItemsArraySelector } from "../../../../selectors";
-
-const styles = theme => ({
-  root: {
-    width: "100%",
-    marginTop: theme.spacing.unit * 3
-  }
-});
 
 class CartTable extends Component {
-  initialCartItem = {
-    id: "",
-    name: "",
-    qty: "",
-    price: "",
-    discount: ""
-  };
-
   state = {
     showConfirmDeleteDialog: false,
     showEditDialog: false,
-    itemToEdit: this.initialCartItem
+    itemToEdit: {
+      id: "",
+      name: "",
+      qty: "",
+      price: "",
+      discount: ""
+    }
   };
 
-  // onChange event for edit cart item form.
   onChange = e => {
     const { itemToEdit } = this.state;
-    const clone = {};
+    const updatedItem = {
+      ...itemToEdit,
+      [e.target.name]: e.target.value
+    };
 
-    Object.assign(clone, itemToEdit);
+    const { qty, discount } = updatedItem;
 
-    let { qty, discount } = clone;
-
-    if (e.target.name === "discount") {
-      discount = e.target.value;
-    } else {
-      qty = e.target.value;
-    }
-
-    const sellingPrice = currency(clone.price).subtract(discount);
+    const sellingPrice = currency(updatedItem.price).subtract(discount);
     const totalPrice = currency(sellingPrice).multiply(qty);
 
-    clone.qty = qty === "" ? "" : Number(qty);
-    clone.discount = discount === "" ? "" : discount;
-
-    clone.sellingPrice = sellingPrice.toString();
-    clone.totalPrice = totalPrice.toString();
-
-    this.setState({ itemToEdit: clone });
+    this.setState({
+      itemToEdit: {
+        ...updatedItem,
+        qty: qty === "" ? "" : Number(qty),
+        discount: discount === "" ? "" : discount,
+        sellingPrice: sellingPrice.toString(),
+        totalPrice: totalPrice.toString()
+      }
+    });
   };
 
-  // Empty cart dialog
   onConfirmDeleteClick = () => {
     this.props.emptyCart();
     this.setState({ showConfirmDeleteDialog: false });
@@ -79,7 +62,6 @@ class CartTable extends Component {
     this.setState({ showConfirmDeleteDialog: false });
   };
 
-  // Edit cart item dialog
   onProductItemClick = itemToEdit => {
     this.setState({ itemToEdit, showEditDialog: true });
   };
@@ -90,60 +72,53 @@ class CartTable extends Component {
 
   onSaveItemClick = () => {
     const { itemToEdit } = this.state;
-
-    const clone = {};
-
-    Object.assign(clone, itemToEdit);
-
     this.props.updateCartItem(itemToEdit);
     this.setState({ showEditDialog: false, itemToEdit: this.initialCartItem });
   };
 
   render() {
     const { showConfirmDeleteDialog, showEditDialog, itemToEdit } = this.state;
-    const { classes, cartObj, cartArray } = this.props;
+    const { cartArray, cartObj } = this.props;
+
+    const columns = [
+      // Define your table columns here
+    ];
 
     return (
-      <Paper className={classes.root}>
-        <YesNo
-          open={showConfirmDeleteDialog}
-          message="Are you sure wan't to empty the cart?"
+      <>
+        <Modal
+          title="Confirm Deletion"
+          visible={showConfirmDeleteDialog}
           onOk={this.onConfirmDeleteClick}
           onCancel={this.onCancelConfirmDeleteClick}
-        />
+        >
+          Are you sure you want to empty the cart?
+        </Modal>
 
         <EditCartItem
           cartObj={cartObj}
-          open={showEditDialog}
+          visible={showEditDialog}
           item={itemToEdit}
           onSave={this.onSaveItemClick}
           onCancel={this.onCancelEditItemClick}
           onChange={this.onChange}
         />
 
-        <Table>
-          <CartHeader
-            isCartEmpty={cartArray.length === 0}
-            onDeleteAll={this.onDeleteAllClick}
-          />
-          <CartBody
-            cartArray={cartArray}
-            onDeleteCartItem={this.onDeleteCartItemClick}
-            onProductItemSelect={this.onProductItemClick}
-          />
-        </Table>
-        <CartFooter summary={cartObj.summary} cartArray={cartArray} />
-      </Paper>
+        <Table
+          columns={columns}
+          dataSource={cartArray}
+          rowKey="id"
+          footer={() => <CartFooter summary={cartObj.summary} />}
+        />
+      </>
     );
   }
 }
 
-function mapStateToProps(state) {
-  return {
-    cartArray: getCartItemsArraySelector(state),
-    cartObj: state.cart
-  };
-}
+const mapStateToProps = state => ({
+  cartArray: getCartItemsArraySelector(state),
+  cartObj: state.cart
+});
 
 const mapDispatchToProps = {
   emptyCart: cartActions.emptyCart,
@@ -151,6 +126,4 @@ const mapDispatchToProps = {
   updateCartItem: cartActions.updateCartItem
 };
 
-const component = withStyles(styles, { withTheme: true })(CartTable);
-
-export default connect(mapStateToProps, mapDispatchToProps)(component);
+export default connect(mapStateToProps, mapDispatchToProps)(CartTable);

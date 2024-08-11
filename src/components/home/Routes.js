@@ -5,7 +5,7 @@ import expense from "../expense";
 import receivings from "../receivings";
 import product from "../products";
 import vendor from "../vendor";
-import sale from "../sale";
+import Sale from "../sale";
 import NotFound from "../notFound/NotFound";
 
 const AppRoutes = () => (
@@ -14,7 +14,7 @@ const AppRoutes = () => (
       <Route path="/" element={<div />} />
 
       {/* Sale */}
-      <Route path="/sale" element={<sale />} />
+      <Route path="/sale" element={<Sale />} />
 
       {/* Receivings */}
       <Route path="/receivings" element={<receivings.Receivings />} />
